@@ -1,17 +1,27 @@
 # databases-scripts
 
-Scripts PostgreSQL do Frigus e artefatos organizados para a entrega interdisciplinar.
+Scripts PostgreSQL do Frigus e pacote organizado para a entrega interdisciplinar.
 
-- `entregas/` — documentos, dados de volume, DAU, auditoria, backup/recuperacao e evidencias da rubrica.
-- `supabase/migrations/` — migrations aplicadas no FrigusDB Dev.
-- `sql/schema/frigus_dev_base_schema.sql` — snapshot de referencia do schema Dev **anterior** as migrations desta entrega; nao reaplicar sozinho.
-- `sql/functions/`, `sql/triggers/`, `sql/procedures/` — scripts por tipo de objeto.
-- `sql/dataload/` — carga de dados.
+## Estrutura
 
-O schema inicial em `sql/schema/schema.sql` e os scripts originais em `sql/` representam a modelagem anterior de 20 tabelas; nao sao a fonte de verdade para o estado atual do FrigusDB Dev. Para reconstruir o estado observado: usar o snapshot base e aplicar, em ordem, as migrations Supabase.
+- `entregas/` — documentos e evidências organizados pela rubrica.
+- `supabase/migrations/` — migrations versionadas aplicadas em FrigusDB Dev e Prod.
+- `sql/schema/frigus_dev_base_schema.sql` — snapshot do schema Dev anterior às migrations desta entrega.
+- `sql/schema/frigus_prod_schema.sql` — dump schema-only dos schemas da aplicação (`public`, `analytics`, `audit`, `dw`, `governance`) obtido em 2026-11-01; sem dados, grants/roles ou schemas gerenciados do Supabase.
+- `sql/functions/`, `sql/procedures/`, `sql/triggers/`, `sql/views/` — definições exportadas do schema atual observado em Prod.
+- `sql/roles/frigus_core_api.sql` — grants e privilégios padrão do papel da Core API, sem senha.
+- `supabase/storage/` — configuração e inventário dos buckets/objetos copiados.
+- `sql/dataload/` — massa sintética reproduzível para ambiente descartável de teste.
+- `sql/legacy/` — scripts anteriores de 20 tabelas, preservados como histórico e não como fonte atual.
 
-## Ambiente
+## Estado dos ambientes em 2026-11-01
 
-As migrations desta entrega foram aplicadas somente ao **FrigusDB Dev** (`qskdjqqyuejeyzpkszyf`). Nao foram aplicadas a producao. RPA permanece em repositorio separado. Nenhuma nova policy RLS foi criada.
+O bootstrap de schema e objetos foi aplicado ao FrigusDB Prod (`orucfmpyvbrfldvvqtus`), e as três migrations estão registradas no histórico remoto. Foram conferidos 15 functions, 3 procedures, 29 triggers, 658 linhas no catálogo técnico e os objetos de Storage copiados a partir do Dev.
 
-Para a matriz de evidencias e pendencias de deploy da Core API, consulte [`entregas/README.md`](entregas/README.md).
+Prod permanece sem dados de negócio (`users`, `groups`, `products`, `plans` e DAU com zero linhas na última verificação). A divergência conhecida em relação ao Dev é de um índice e uma constraint; consulte `entregas/README.md`. Nenhuma policy RLS nova foi criada. O manifesto de Storage registra zero políticas de Storage; validar permissões de leitura/escrita antes do tráfego real. O RPA está em [repositório separado](https://github.com/Frigus-Interdisciplinar/frigus-rpa).
+
+O snapshot de Prod é uma fotografia de referência, não uma migration. O snapshot base Dev e migrations registram a evolução do schema; exports por objeto facilitam consulta. Não reaplique exports individuais num ambiente já inicializado; use migrations na ordem registrada para mudanças futuras. O SQL de role é uma configuração privilegiada de execução única e não contém senha. A carga de `sql/dataload/dataload.sql` é exclusivamente para banco de teste descartável e não deve ser executada em Prod.
+
+## Entrega
+
+Consulte [`entregas/README.md`](entregas/README.md) para a matriz de requisitos, evidências verificadas e pendências operacionais, incluindo o deploy da Core API que inicia a coleta de DAU.

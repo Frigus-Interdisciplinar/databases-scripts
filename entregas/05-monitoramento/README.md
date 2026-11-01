@@ -1,11 +1,11 @@
 # DAU por acesso autenticado
 
-A migration cria `dw.user_daily_access` com chave `(user_id, access_date)` e a view `dw.vw_dau` calcula DAU, WAU, MAU, DAU/MAU e variacao diaria. A Core API grava o primeiro acesso por usuario/dia apos validar JWT, usuario ativo e sessao.
+A migration cria `dw.user_daily_access` com chave `(user_id, access_date)` e a view `dw.vw_dau`, que calcula DAU, WAU, MAU, DAU/MAU e variação diária. A Core API grava o primeiro acesso por usuário/dia depois de validar token, usuário ativo e sessão. A chave primária impede duplicação diária; o dia de negócio usa `America/Sao_Paulo`.
 
-## Privilegios
+## Estado de implantação
 
-Nenhum grant foi dado a `PUBLIC`, `anon`, `authenticated` ou `service_role`, e nenhuma policy RLS foi criada. A API atualmente conecta ao banco como `postgres`, conforme sessao JDBC observada no Dev. `postgres` ja tem acesso por propriedade/superuser; o desenho funcional nao exige grant adicional. Recomenda-se migrar a API para um usuario dedicado de minimo privilegio em mudanca coordenada, fora desta entrega, com rotacao do segredo e deploy.
+O schema está em Dev e Prod. A tabela de Prod existe e estava vazia na última consulta. A mudança de código está representada em `core-api-dau.patch` e já aparece no working tree local do repositório da Core API, mas ainda não foi publicada no runtime. A coleta começa após integrar a alteração, configurar o acesso e implantar a API.
 
-## Integracao e operacao
+O papel `frigus_core_api` foi criado em Prod com `BYPASSRLS` e grants para operação da API; a aplicação ainda precisa mudar da credencial `postgres` para esse papel em uma implantação coordenada. A senha deve ser armazenada em secret manager e nunca versionada neste pacote.
 
-`core-api-dau.patch` e o patch portavel da alteracao local em `SecurityFilter.java`. Aplicar no repositorio da Core API e fazer deploy para iniciar a coleta. O registro e best-effort: falha da metrica gera log no servidor sem rejeitar requisicao autenticada. A chave primaria impede duplicacao diaria. O fuso para o dia de negocio e `America/Sao_Paulo`.
+Nenhuma policy RLS nova foi adicionada. O registro de métrica é best-effort: falha ao gravar DAU não rejeita requisição autenticada. A função de escrita e a view ficam no schema `dw`.

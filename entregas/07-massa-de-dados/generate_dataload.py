@@ -6,10 +6,12 @@ Gera um único arquivo .sql com INSERTs em lote, respeitando todas as
 FKs, UNIQUEs e CHECKs do schema (enums em inglês, unit_of_measure_enum,
 updated_at/deleted_at).
 
-Uso: python3 generate_dataload.py > 08_dataload.sql
+Uso: python3 entregas/07-massa-de-dados/generate_dataload.py > sql/dataload/dataload.sql
 """
 
 import random
+import json
+import sys
 import uuid
 from datetime import datetime, timedelta, date
 from faker import Faker
@@ -17,6 +19,9 @@ from faker import Faker
 random.seed(42)
 fake = Faker("pt_BR")
 Faker.seed(42)
+AS_OF_DATETIME = datetime(2026, 11, 1, 12, 0, 0)
+AS_OF_DATE = AS_OF_DATETIME.date()
+ROW_COUNTS = {}
 
 OUT = []
 
@@ -38,7 +43,7 @@ def uid():
 def rand_ts(start_days_ago=730, end_days_ago=0):
     delta = random.randint(end_days_ago, start_days_ago)
     seconds = random.randint(0, 86399)
-    return (datetime.now() - timedelta(days=delta, seconds=-seconds))
+    return AS_OF_DATETIME - timedelta(days=delta, seconds=-seconds)
 
 
 def sql_ts(dt):
@@ -52,6 +57,7 @@ def sql_date(d):
 def batch_insert(table, columns, rows, batch_size=1000):
     if not rows:
         return
+    ROW_COUNTS[table] = ROW_COUNTS.get(table, 0) + len(rows)
     cols_sql = ", ".join(columns)
     for i in range(0, len(rows), batch_size):
         chunk = rows[i:i + batch_size]
@@ -76,16 +82,34 @@ N_REQUESTS = 1600
 w("BEGIN;")
 
 # ============================================================
-# 1) PLANS -> já inseridos no script de schema, só lemos ids fixos
+# 1) PLANS
 # ============================================================
-PLAN_NAMES = ["Frigus Free", "Frigus Família", "Frigus Comercial", "Frigus Empresarial"]
-PLAN_IDS = {name: i + 1 for i, name in enumerate(PLAN_NAMES)}
+PLAN_CATALOG = [
+    (1, "FREE", "Frigus Free", "Plano gratuito com funcionalidades básicas de controle de estoque.", 0.00, None),
+    (2, "PLUS", "Frigus Plus", "Plano para uso doméstico compartilhado entre membros da família.", 29.99, "MONTHLY"),
+    (3, "FAMILY", "Frigus Família", "Plano compartilhado para famílias maiores.", 49.99, "MONTHLY"),
+    (4, "COMMERCIAL", "Frigus Comercial", "Plano para pequenos comércios com múltiplos estoques.", 119.99, "MONTHLY"),
+    (5, "ENTERPRISE", "Frigus Empresarial", "Plano para empresas com necessidades avançadas de gestão.", 159.99, "MONTHLY"),
+]
+PLAN_NAMES = [plan[2] for plan in PLAN_CATALOG]
+PLAN_IDS = {plan[2]: plan[0] for plan in PLAN_CATALOG}
 PLAN_PRICE = {
-    "Frigus Free": 0.00,
-    "Frigus Família": 29.99,
-    "Frigus Comercial": 119.99,
-    "Frigus Empresarial": 159.99,
+    plan[2]: plan[4] for plan in PLAN_CATALOG
 }
+
+plan_values = []
+for plan_id, code, name, description, price, interval in PLAN_CATALOG:
+    interval_sql = "NULL" if interval is None else esc(interval)
+    plan_values.append(
+        f"({plan_id}, {esc(code)}, {esc(name)}, {esc(description)}, {price:.2f}, {interval_sql}, TRUE)"
+    )
+w(
+    "INSERT INTO plans (id, plan_code, name, description, price, billing_interval, active) VALUES\n"
+    + ",\n".join(plan_values)
+    + "\nON CONFLICT (plan_code) DO NOTHING;"
+)
+w("SELECT setval('plans_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM plans), 1));")
+ROW_COUNTS["plans"] = len(PLAN_CATALOG)
 
 # ============================================================
 # 2) GROUPS
@@ -302,7 +326,7 @@ for (sid, gid_, sname) in stocks:
         qty = random.randint(0, 30)
         min_qty = random.choice([None, 1, 2, 3, 5])
         expire_offset = random.randint(-15, 180)
-        expire = date.today() + timedelta(days=expire_offset)
+        expire = AS_OF_DATE + timedelta(days=expire_offset)
         if expire_offset < 0:
             status = "EXPIRED"
         elif expire_offset <= 5:
@@ -390,7 +414,7 @@ for i in range(1, N_RECIPE_SUGGESTIONS + 1):
     s = random.choice(stocks)
     matched = random.randint(0, 8)
     missing = random.randint(0, 5)
-    nearest_expire = date.today() + timedelta(days=random.randint(-5, 60))
+    nearest_expire = AS_OF_DATE + timedelta(days=random.randint(-5, 60))
     score = round(random.uniform(0, 1), 4)
     created = rand_ts(120, 0)
     rs_rows.append((
@@ -413,7 +437,7 @@ shopping_lists = []  # (id, date, stock_id, status, created_at)
 for i in range(N_SHOPPING_LISTS):
     s = random.choice(stocks)
     lid = uid()
-    d = date.today() - timedelta(days=random.randint(0, 400))
+    d = AS_OF_DATE - timedelta(days=random.randint(0, 400))
     status = random.choices(LIST_STATUSES, weights=[0.25, 0.65, 0.10])[0]
     created = datetime.combine(d, datetime.min.time()) + timedelta(hours=random.randint(6, 22))
     shopping_lists.append((lid, d, s[0], status, created))
@@ -567,8 +591,8 @@ for cid, members in participants_by_conv.items():
         if slp_ids_all and random.random() < 0.05:
             related = random.choice(slp_ids_all)
         created = conv_created + timedelta(minutes=random.randint(1, 500000))
-        if created > datetime.now():
-            created = datetime.now() - timedelta(minutes=random.randint(1, 1000))
+        if created > AS_OF_DATETIME:
+            created = AS_OF_DATETIME - timedelta(minutes=random.randint(1, 1000))
         messages.append((msg_id, cid, sender, mtype, content, related, created))
         msg_id += 1
 
@@ -621,8 +645,8 @@ for m in messages:
             continue
         seen_pairs.add(key)
         read_at = m[6] + timedelta(minutes=random.randint(1, 4000))
-        if read_at > datetime.now():
-            read_at = datetime.now()
+        if read_at > AS_OF_DATETIME:
+            read_at = AS_OF_DATETIME
         mr_rows.append((str(m[0]), esc(cid), esc(r), sql_ts(read_at)))
 
 batch_insert("message_reads", ["message_id", "conversation_id", "user_id", "read_at"], mr_rows)
@@ -632,7 +656,7 @@ batch_insert("message_reads", ["message_id", "conversation_id", "user_id", "read
 # ============================================================
 subscriptions = []  # (id, user_id, plan_name, status, started_at, period_start, period_end, canceled_at)
 for u in users:
-    plan_name = random.choices(PLAN_NAMES, weights=[0.45, 0.30, 0.15, 0.10])[0]
+    plan_name = random.choices(PLAN_NAMES, weights=[0.35, 0.20, 0.20, 0.15, 0.10])[0]
     status = random.choices(["TRIAL", "ACTIVE", "DELINQUENT"], weights=[0.10, 0.80, 0.10])[0]
     started = rand_ts(500, 0)
     period_start = started
@@ -695,7 +719,7 @@ for s in subscriptions:
             "NULL" if processed_at is None else sql_ts(processed_at),
         ))
         charge_date = charge_date + timedelta(days=30)
-        if charge_date > datetime.now():
+        if charge_date > AS_OF_DATETIME:
             break
 
 batch_insert(
@@ -719,7 +743,7 @@ for i in range(1, N_REQUESTS + 1):
     s = random.choice(stocks)
     qty = random.randint(1, 10)
     desc = fake.sentence(nb_words=8) if random.random() < 0.6 else None
-    d = date.today() - timedelta(days=random.randint(0, 300))
+    d = AS_OF_DATE - timedelta(days=random.randint(0, 300))
 
     conv_id = None
     msg_id_ref = None
@@ -750,3 +774,8 @@ w(f"SELECT setval('requests_id_seq', {N_REQUESTS});")
 w("COMMIT;")
 
 print("\n\n".join(OUT))
+print(json.dumps({
+    "as_of": AS_OF_DATE.isoformat(),
+    "rows_by_table": ROW_COUNTS,
+    "total_rows": sum(ROW_COUNTS.values()),
+}, ensure_ascii=False, indent=2), file=sys.stderr)

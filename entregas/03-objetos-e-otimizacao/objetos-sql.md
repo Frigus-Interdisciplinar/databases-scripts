@@ -1,19 +1,15 @@
-# Objetos logicos e auditoria
+# Objetos lógicos, auditoria e otimização
 
-## Regras de negocio
+Inventário do schema de Prod verificado em 2026-11-01: 15 functions, 3 procedures e 29 triggers não internos. As definições exportadas estão em `../../sql/functions/`, `../../sql/procedures/` e `../../sql/triggers/`.
 
-No Dev existem 13 functions e 3 procedures em `public`, alem de funcoes de auditoria e Data Mart. Exemplos implementados:
+## Regras de negócio
 
-- Functions: `fn_compute_product_status`, `fn_low_stock_products`, `fn_suggest_recipes`.
-- Procedures: `sp_close_shopping_list`, `sp_get_or_create_private_conversation`, `sp_purchase_shopping_list_item`.
-- ETL do Data Mart: `dw.sp_load_all()` e uma function que retorna `void`.
+Exemplos de funções: `public.fn_compute_product_status`, `public.fn_low_stock_products`, `public.fn_suggest_recipes` e `public.fn_pair_key`. Procedures de negócio: `public.sp_close_shopping_list`, `public.sp_get_or_create_private_conversation` e `public.sp_purchase_shopping_list_item`. `dw.sp_load_all()` é uma function `RETURNS void`, não uma procedure, e executa a carga do Data Mart.
 
-As definicoes estao preservadas em `sql/schema/frigusdb_dev_snapshot.sql`.
+## Triggers de auditoria
 
-## Auditoria
+`audit_products_row_changes` em `public.products` e `audit_stock_products_row_changes` em `public.stock_products` chamam `audit.capture_row_change()`. A função persiste schema, tabela, operação (`TG_OP`), `CURRENT_USER` e snapshots JSONB de `OLD` e `NEW` conforme o tipo da operação. O trigger da tabela de auditoria registra inserts no log; as duas tabelas de negócio atendem ao requisito de auditoria em pelo menos duas tabelas.
 
-Triggers `audit_products_row_changes` e `audit_stock_products_row_changes` chamam `audit.capture_row_change()`. A funcao registra schema/tabela, `TG_OP`, `CURRENT_USER`, `OLD` e `NEW` em JSONB. O Dev tinha 33.551 linhas na tabela de auditoria quando foi verificado.
+## Índices e análise
 
-## Desempenho
-
-`explain-analyze.sql` executa consultas de leitura com `EXPLAIN (ANALYZE, BUFFERS, VERBOSE)` nos indices existentes. Resultados/observacoes ficam em `explain-analyze-dev.md`. EXPLAIN ANALYZE executa a consulta; usar somente em SELECTs revisados.
+As consultas revisadas em `explain-analyze.sql` usam os índices já existentes `ix_fact_mov_date`, `ix_fact_mov_stock`, `idx_stock_movements_date` e `ix_user_daily_access_date_user`. Evidências e limites da amostra estão em `explain-analyze-dev.md`. Nenhum índice novo foi criado durante esta entrega: a amostra do DAU estava vazia e não havia evidência suficiente para justificar novos índices sem medir carga representativa.

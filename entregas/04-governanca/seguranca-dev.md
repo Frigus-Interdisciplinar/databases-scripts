@@ -1,10 +1,18 @@
-# Observacoes de seguranca — FrigusDB Dev
+# Observações de segurança — Dev e Prod
 
-Consultas e advisors executados apos as migrations desta entrega, em `2026-11-01`.
+Verificações registradas em 2026-11-01; não substituem monitoramento contínuo.
 
-- `governance` nao tem `USAGE` para `anon`, `authenticated` ou `service_role`; a tabela de catalogo tambem nao tem SELECT para esses papeis. `dw.user_daily_access` e `dw.vw_dau` igualmente nao concedem leitura a esses papeis. Nenhum RLS novo foi ativado.
-- A conexao JDBC ativa observada para a Core API usa `postgres`. Esse papel e superuser e contorna grants e RLS; autenticacao/autorizacao da aplicacao protege rotas, mas o segredo de banco comprometido permite acesso administrativo total. Trocar para papel dedicado e least-privilege requer rotacao coordenada do segredo e deploy.
-- Advisor existente: 23 tabelas publicas com RLS ativo sem policies. Para cliente direto via Data API, isso resulta em bloqueio; Core API como `postgres` continua tendo acesso. O Advisor tambem aponta 16 rotinas publicas com `search_path` mutavel. Sao itens pre-existentes, nao criados pelas migrations desta entrega.
-- Advisor de performance sinaliza 21 FKs sem indice cobridor e 24 indices sem uso observado. Os quatro planos guardados em `03-objetos-e-otimizacao/explain-analyze-dev.md` mostram os indices escolhidos nas consultas avaliadas. Nao foi removido nem criado indice sem analise de workload.
+## Acesso e RLS
 
-O modelo de acesso do Supabase combina grants (quem pode acessar o objeto pela Data API) e RLS (quais linhas podem ser acessadas). Esta entrega mantem o caminho de acesso da Core API e nao abre tabelas novas para clientes diretos. Veja [Securing your API](https://supabase.com/docs/guides/api/securing-your-api).
+- Nenhuma policy RLS nova foi criada nesta entrega. Em Prod havia 24 tabelas com RLS habilitado e uma policy em `audit.row_change_log`; tabelas com RLS e sem policy ficam inacessíveis a roles comuns quando RLS se aplica.
+- `governance` é schema privado sem acesso concedido a `anon`, `authenticated` ou `service_role`. O catálogo exportado aqui é documentação; controlar também cópias e exports que possam conter metadados sensíveis.
+- A Core API do Dev foi observada conectada como `postgres`, papel superusuário. Validação de rotas da aplicação não limita o impacto de vazamento dessa credencial.
+- Em Prod foi criado `frigus_core_api` com `BYPASSRLS` e grants operacionais para a API. É um login sem atributos administrativos, mas `BYPASSRLS` significa que ignora as políticas RLS: proteger com segredo forte em secret manager, limitar rede, rotacionar credencial e usar somente do servidor. A API ainda precisa ser configurada e implantada para usar esse papel; não foi comprovado uso em produção.
+
+## Advisors e dívida técnica observada no Dev
+
+- Advisors apontaram 23 tabelas públicas com RLS e sem policies, 16 rotinas públicas com `search_path` mutável, 21 FKs sem índice cobridor e 24 índices sem uso observado.
+- Os planos em `../03-objetos-e-otimizacao/explain-analyze-dev.md` mostram índices selecionados nas consultas verificadas. Uso observado curto não justifica remover índices automaticamente; revisar com métricas de workload.
+- Views, funções `SECURITY DEFINER`, grants e políticas devem ser reavaliados quando a Core API mudar de papel. Não publicar credenciais em `.env`, exemplos ou logs.
+
+O desenho atual confia na Core API para autorização de negócio. A segurança do banco ainda depende de grants mínimos e isolamento das credenciais, mesmo sem policies adicionais.

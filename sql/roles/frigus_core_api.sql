@@ -1,0 +1,53 @@
+CREATE ROLE frigus_core_api
+    LOGIN
+    NOSUPERUSER
+    NOCREATEDB
+    NOCREATEROLE
+    NOREPLICATION
+    BYPASSRLS;
+
+GRANT USAGE ON SCHEMA public, analytics, audit, dw, extensions TO frigus_core_api;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public
+TO frigus_core_api;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA analytics, dw TO frigus_core_api;
+GRANT INSERT ON TABLE dw.user_daily_access TO frigus_core_api;
+GRANT SELECT, INSERT ON TABLE audit.row_change_log TO frigus_core_api;
+
+GRANT USAGE, SELECT, UPDATE
+ON ALL SEQUENCES IN SCHEMA public, audit, dw
+TO frigus_core_api;
+
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public, analytics, audit, dw, extensions TO frigus_core_api;
+GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA public, analytics, dw TO frigus_core_api;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO frigus_core_api;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO frigus_core_api;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT EXECUTE ON FUNCTIONS TO frigus_core_api;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA analytics
+    GRANT SELECT ON TABLES TO frigus_core_api;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA analytics
+    GRANT EXECUTE ON FUNCTIONS TO frigus_core_api;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA dw
+    GRANT SELECT ON TABLES TO frigus_core_api;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA dw
+    GRANT EXECUTE ON FUNCTIONS TO frigus_core_api;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA dw
+    GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO frigus_core_api;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA audit
+    GRANT INSERT ON TABLES TO frigus_core_api;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA audit
+    GRANT EXECUTE ON FUNCTIONS TO frigus_core_api;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA audit
+    GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO frigus_core_api;
+
+REVOKE ALL ON SCHEMA governance FROM frigus_core_api;
+REVOKE ALL ON ALL TABLES IN SCHEMA governance FROM frigus_core_api;

@@ -1,26 +1,29 @@
 # Entregas do Projeto Interdisciplinar
 
-Este pacote separa os artefatos pela rubrica e registra o que foi aplicado em **FrigusDB Dev**. As migrations versionadas em `supabase/migrations/` sao a fonte das mudancas de banco desta entrega. O arquivo `sql/schema/frigus_dev_base_schema.sql` e o estado-base anterior a elas; nao reaplicar sozinho.
+Esta pasta mapeia os requisitos da rubrica aos artefatos e registra o que foi observado nos bancos em 2026-11-01.
 
-| Rubrica | Pasta / evidencia |
+| Requisito | Evidências |
 |---|---|
-| Modelo relacional, PK/FK e cardinalidades | `01-modelagem/` |
-| Massa de dados e modelo dimensional/ETL | `02-engenharia-de-dados/`, `07-massa-de-dados/` |
-| Functions, procedures, auditoria, indices e planos | `03-objetos-e-otimizacao/` |
-| Catalogo, niveis de acesso e recuperacao | `04-governanca/` |
-| Registro de DAU | `05-monitoramento/` |
-| CTE recursiva/heranca | `06-estruturas-avancadas/` |
-| RPA | `08-integracao-rpa/README.md` (integracao mantida no repositorio separado, fora deste escopo) |
+| Modelo relacional, chaves e cardinalidades | [`01-modelagem/modelo-relacional.md`](01-modelagem/modelo-relacional.md), [`01-modelagem/relacionamentos-pk-fk.csv`](01-modelagem/relacionamentos-pk-fk.csv) e [`01-modelagem/normalizacao-3fn.md`](01-modelagem/normalizacao-3fn.md) |
+| Massa verossímil de pelo menos 500 registros | [`07-massa-de-dados/README.md`](07-massa-de-dados/README.md), gerador, [`seed-manifest.json`](07-massa-de-dados/seed-manifest.json), [`../sql/dataload/dataload.sql`](../sql/dataload/dataload.sql) e verificação SQL |
+| ETL, Data Mart, CTEs e Window Functions | [`02-engenharia-de-dados/data-mart-etl.md`](02-engenharia-de-dados/data-mart-etl.md), definições em `../sql/views/` e rotina em `../sql/functions/dw__sp_load_all.sql` |
+| RPA legado → Frigus | [`08-integracao-rpa/README.md`](08-integracao-rpa/README.md) e [repositório RPA](https://github.com/Frigus-Interdisciplinar/frigus-rpa), mantido fora deste repositório |
+| Functions, procedures, auditoria e índices | [`03-objetos-e-otimizacao/objetos-sql.md`](03-objetos-e-otimizacao/objetos-sql.md), `../sql/functions/`, `../sql/procedures/`, `../sql/triggers/` e `03-objetos-e-otimizacao/explain-analyze-dev.md` |
+| Catálogo, segurança, backup e recuperação | [`04-governanca/catalogo-de-dados.csv`](04-governanca/catalogo-de-dados.csv), [`04-governanca/seguranca-dev.md`](04-governanca/seguranca-dev.md) e [`04-governanca/backup-recuperacao.md`](04-governanca/backup-recuperacao.md) |
+| DAU | [`05-monitoramento/README.md`](05-monitoramento/README.md), migration e patch da Core API |
+| Estruturas avançadas | [`06-estruturas-avancadas/cte-recursiva.md`](06-estruturas-avancadas/cte-recursiva.md) |
 
-## Estado aplicado
+## Estado verificado
 
-- Catalogo tecnico em `governance.data_catalog`, com 658 linhas cobrindo 65 objetos e suas colunas apos a carga do catalogo; schema privado, sem USAGE para `anon`, `authenticated` ou `service_role`.
-- Tabela `dw.user_daily_access`, indice para consultas por dia e `dw.vw_dau` recalculada sobre os acessos autenticados registrados pela Core API.
-- Core API local registra no maximo um acesso por usuario/dia apos validar token, usuario e sessao. O codigo e o patch correspondente estao em `05-monitoramento/`; o patch precisa ser revisado/integrado e implantado no repositorio/runtime da API para iniciar a coleta.
-- Nenhuma policy nova de RLS foi criada.
-- A Core API do Dev conecta atualmente como `postgres`, confirmado em `pg_stat_activity`; isso permite a gravacao, mas e uma credencial superprivilegiada. Trocar por papel de minimo privilegio requer rotacao coordenada de `DATABASE_USERNAME`/`DATABASE_PASSWORD` e deploy, fora desta migration.
-- A view de DAU e a tabela de acesso nao tem grants para `PUBLIC`, `anon`, `authenticated` ou `service_role`. A tabela ainda esta vazia ate o deploy da API com o registro.
+- O schema e objetos necessários foram inicializados em Prod; as três migrations do pacote aparecem aplicadas no histórico remoto.
+- Na última inspeção de Prod: 15 functions, 3 procedures, 29 triggers, 163 índices, 185 constraints, 24 tabelas com RLS habilitado e uma policy. A divergência observada em relação ao inventário de Dev foi um índice e uma constraint. Não foram feitas alterações para forçar igualdade; revisar antes de qualquer replicação adicional.
+- O catálogo `governance.data_catalog` contém 658 linhas referentes a 65 objetos; o CSV nesta pasta é o export dessa tabela.
+- Storage: os buckets e sete objetos presentes no escopo copiado foram transferidos. A cópia de objetos não faz parte de backup do PostgreSQL.
+- A fotografia de schema Prod está em `../sql/schema/frigus_prod_schema.sql`; configurações e inventário de Storage em `../supabase/storage/`; script de grants sem senha em `../sql/roles/frigus_core_api.sql`.
+- O Storage foi copiado, mas o manifesto registra zero políticas de Storage. Confirmar as permissões necessárias à aplicação antes de abrir tráfego real; detalhes em `../supabase/storage/README.md`.
+- Prod continua sem massa de dados de negócio. A carga de 165.052 linhas é sintética e reservada a um banco descartável de teste.
+- `dw.user_daily_access` existe, mas está vazia. A alteração local da Core API registra um acesso diário por usuário após autenticação; o patch não foi implantado no runtime. A coleta só começa após integrar e publicar essa alteração.
+- O papel `frigus_core_api` foi criado em Prod com `BYPASSRLS`; o Core API ainda precisa de configuração/deploy coordenado para utilizar esse usuário em vez de `postgres`. A credencial deve ser configurada por secret manager, nunca neste repositório.
+- Nenhuma policy RLS nova foi criada nesta entrega. O inventário existente inclui tabelas com RLS e uma policy de auditoria; veja a revisão de segurança para limitações do modelo.
 
-## Validacao
-
-`03-objetos-e-otimizacao/explain-analyze-dev.md` guarda os planos e tempos obtidos no Dev. A carga existente ja excede 500 registros em varias entidades; o gerador reproducivel esta em `07-massa-de-dados/generate_dataload.py`.
+Os exports em `../sql/functions`, `../sql/procedures`, `../sql/triggers` e `../sql/views` são documentação reproduzível do estado observado. Não os aplique por cima de um banco inicializado; para alterações futuras, crie migrations versionadas.

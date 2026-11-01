@@ -1,9 +1,18 @@
-# Massa de dados
+# Massa de dados sintética
 
-`generate_dataload.py` gera massa sintetica em portugues usando Faker, com carga em lotes e IDs/FKs coerentes. O script pode gerar milhares de registros; execute somente em banco de desenvolvimento vazio/restauravel, pois nao e um upsert e pode colidir com dados existentes.
+`generate_dataload.py` gera `sql/dataload/dataload.sql` com dados fictícios em português, IDs e FKs coerentes, seed dos cinco planos e 165.052 registros em 22 tabelas. O manifesto com a contagem gerada está em `seed-manifest.json`.
 
-O FrigusDB Dev ja supera 500 registros em entidades como `users`, `groups`, `stocks`, `stock_products`, `stock_movements`, `messages` e `transactions`, verificado por `COUNT(*)`. O snapshot do banco nao inclui dados.
+Use apenas num banco descartável de teste já inicializado com o schema e as migrations. A carga é `INSERT`, não sincroniza nem substitui dados existentes; não execute em Prod ou em Dev com dados que devam ser preservados. Usuários, emails e credenciais gerados são sintéticos e não servem para autenticação real.
 
-## Geracao
+## Gerar novamente
 
-Instale `Faker` em ambiente virtual e rode `python generate_dataload.py > initial_volume_seed.sql`. Revise o SQL e o projeto alvo antes de carga. O script cria uma carga sintetica, nao e migracao estrutural.
+Requer Python 3 e `Faker`. A partir da raiz do repositório:
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+pip install Faker
+python3 entregas/07-massa-de-dados/generate_dataload.py > sql/dataload/dataload.sql
+```
+
+Revise o SQL e o destino antes de executar. Para carregar em uma base de teste, use a URL desse banco e `psql -X -v ON_ERROR_STOP=1 -f sql/dataload/dataload.sql`. Ao concluir, execute `psql ... -f sql/dataload/verify_volume.sql` e compare os totais com o manifesto.
