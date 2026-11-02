@@ -75,11 +75,24 @@ N_USERS = 3000
 N_RECIPES = 220
 N_RECIPE_SUGGESTIONS = 2000
 N_SHOPPING_LISTS = 2000
-N_CONVERSATIONS_GROUP_RATIO = 0.55
+N_CONVERSATIONS_GROUP_RATIO = 1.0
 N_CONVERSATIONS = 1500
 N_REQUESTS = 1600
 
 w("BEGIN;")
+w("""DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM public.users LIMIT 1)
+       OR EXISTS (SELECT 1 FROM public.groups LIMIT 1)
+       OR EXISTS (SELECT 1 FROM public.stocks LIMIT 1)
+       OR EXISTS (SELECT 1 FROM public.products LIMIT 1)
+       OR EXISTS (SELECT 1 FROM public.stock_products LIMIT 1) THEN
+        RAISE EXCEPTION 'Carga sintética aceita somente em banco descartável sem dados de negócio';
+    END IF;
+END;
+$$;""")
+w("ALTER TABLE public.stock_products DISABLE TRIGGER trg_notify_commercial_stock_level;")
+w("ALTER TABLE public.shopping_list_products DISABLE TRIGGER trg_notify_shopping_list_product_added;")
 
 # ============================================================
 # 1) PLANS
@@ -133,9 +146,6 @@ for i in range(N_GROUPS):
     created = rand_ts(700, 30)
     groups.append((gid, name, None, created, kind))
 
-rows = [(esc(g[0]), esc(g[1]), "NULL", sql_ts(g[3])) for g in groups]
-batch_insert("groups", ["id", "name", "banner_picture", "created_at"], rows)
-
 # ============================================================
 # 3) USERS
 # ============================================================
@@ -160,6 +170,14 @@ batch_insert(
     ["id", "name", "birth_date", "account_type", "email", "hash_password", "created_at"],
     rows,
 )
+
+domestic_owners = [u[0] for u in users if u[3] == "DOMESTIC"]
+business_owners = [u[0] for u in users if u[3] in ("BUSINESS", "COMMERCIAL")]
+group_rows = []
+for g in groups:
+    owner_pool = business_owners if g[4] == "biz" else domestic_owners
+    group_rows.append((esc(g[0]), esc(g[1]), "NULL", sql_ts(g[3]), esc(random.choice(owner_pool))))
+batch_insert("groups", ["id", "name", "banner_picture", "created_at", "owner_id"], group_rows)
 
 # ============================================================
 # 4) USER_GROUPS
@@ -717,6 +735,7 @@ for s in subscriptions:
             "NULL" if error_msg is None else esc(error_msg),
             sql_ts(charge_date), sql_ts(queued_at),
             "NULL" if processed_at is None else sql_ts(processed_at),
+            esc(f"seed-{tid}"),
         ))
         charge_date = charge_date + timedelta(days=30)
         if charge_date > AS_OF_DATETIME:
@@ -727,7 +746,7 @@ batch_insert(
     [
         "id", "user_id", "subscription_id", "plan_id", "amount", "payment_method",
         "fake_card_last4", "fake_pix_key", "status", "queue_job_id", "attempts", "max_attempts",
-        "error_message", "created_at", "queued_at", "processed_at",
+        "error_message", "created_at", "queued_at", "processed_at", "idempotency_key",
     ],
     txn_rows,
     batch_size=500,
@@ -771,6 +790,8 @@ batch_insert(
 )
 w(f"SELECT setval('requests_id_seq', {N_REQUESTS});")
 
+w("ALTER TABLE public.stock_products ENABLE TRIGGER trg_notify_commercial_stock_level;")
+w("ALTER TABLE public.shopping_list_products ENABLE TRIGGER trg_notify_shopping_list_product_added;")
 w("COMMIT;")
 
 print("\n\n".join(OUT))
