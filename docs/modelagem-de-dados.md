@@ -15,7 +15,7 @@ Revisão feita em 02/11/2026 direto no Postgres (Supabase) em modo somente leitu
 | 2d | Window Functions | ✅ | Running total, RANK, LAG, ROW_NUMBER |
 | 3a | 2 Functions + 2 Procedures | ✅ | Procedures recriadas com `uuid` e testadas em 02/11 (ver 4.1) |
 | 3b | Triggers de auditoria (2 tabelas) | ✅ | `products` e `stock_products` → `audit.row_change_log` |
-| 3c | EXPLAIN ANALYZE + índices | ⚠️ | Índices existem; falta registro da análise |
+| 3c | EXPLAIN ANALYZE + índices | ✅ | Análise registrada em 02/11: view de engajamento de 1,7 s para ~60 ms (ver seção 8 de banco-de-dados.md) |
 | 4a | Catálogo de dados | ✅ com ressalva | 693 linhas; tabelas descritas, colunas ainda genéricas |
 | 4b | Backup e recuperação documentados | ❌ | Não existe documento. Rascunho na seção 6 |
 | 5 | DAU automático no Postgres | ⚠️ | Tabela e view existem; o INSERT vem do backend, não de objeto do banco |
