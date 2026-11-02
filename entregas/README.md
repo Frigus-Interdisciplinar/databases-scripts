@@ -4,7 +4,7 @@ Esta pasta mapeia os requisitos da rubrica aos artefatos e registra o que foi ob
 
 | Requisito | Evidências |
 |---|---|
-| Modelo relacional, chaves e cardinalidades | [`01-modelagem/modelo-relacional.md`](01-modelagem/modelo-relacional.md), [`01-modelagem/relacionamentos-pk-fk.csv`](01-modelagem/relacionamentos-pk-fk.csv) e [`01-modelagem/normalizacao-3fn.md`](01-modelagem/normalizacao-3fn.md) |
+| Modelo relacional, chaves e cardinalidades | [`01-modelagem/modelo-relacional.md`](01-modelagem/modelo-relacional.md), [`01-modelagem/relacionamentos-pk-fk.csv`](01-modelagem/relacionamentos-pk-fk.csv), [`01-modelagem/normalizacao-3fn.md`](01-modelagem/normalizacao-3fn.md), modelo lógico para o DrawDB [`01-modelagem/modelo-logico-drawdb.sql`](01-modelagem/modelo-logico-drawdb.sql) e visão geral [`01-modelagem/visao-geral-do-banco.md`](01-modelagem/visao-geral-do-banco.md) |
 | Massa verossímil de pelo menos 500 registros | [`07-massa-de-dados/README.md`](07-massa-de-dados/README.md), gerador, [`seed-manifest.json`](07-massa-de-dados/seed-manifest.json), [`../sql/dataload/dataload.sql`](../sql/dataload/dataload.sql) e verificação SQL |
 | ETL, Data Mart, CTEs e Window Functions | [`02-engenharia-de-dados/data-mart-etl.md`](02-engenharia-de-dados/data-mart-etl.md), definições em `../sql/views/` e rotina em `../sql/functions/dw__sp_load_all.sql` |
 | RPA legado → Frigus | [`08-integracao-rpa/README.md`](08-integracao-rpa/README.md) e [repositório RPA](https://github.com/Frigus-Interdisciplinar/frigus-rpa), mantido fora deste repositório |
