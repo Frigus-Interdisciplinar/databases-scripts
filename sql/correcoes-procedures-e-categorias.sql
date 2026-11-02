@@ -1,7 +1,7 @@
 -- fn_pair_key por uuid (ids reais); a versao int fica, sem uso
 CREATE OR REPLACE FUNCTION public.fn_pair_key(p_user_a uuid, p_user_b uuid)
 RETURNS varchar LANGUAGE sql IMMUTABLE AS $$
-    SELECT LEAST(p_user_a, p_user_b)::text || '_' || GREATEST(p_user_a, p_user_b)::text;
+    SELECT LEAST(p_user_a, p_user_b)::text || '-' || GREATEST(p_user_a, p_user_b)::text;
 $$;
 
 CREATE OR REPLACE FUNCTION public.trg_fn_conversation_participants_pair_key()

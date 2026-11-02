@@ -154,6 +154,8 @@ EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM dw.vw_dau;
 ```
 Em 02/11, `dw.vw_dau` rodou em ~2 ms com `Index Only Scan` em `ix_user_daily_access_date_user`, e a consulta da fato por data usou `ix_fact_mov_date`.
 
+**Análise registrada (02/11).** `public.vw_user_engagement_analytics` levava ~1,7 s para 3.006 usuários. O plano mostrou ~320 mil linhas no join de mensagens, movimentações e pedidos (produto cartesiano por usuário) antes de agregar. Um índice não resolveria isso. A view foi reescrita para agregar cada tabela antes do join, com as mesmas colunas e os mesmos valores (a única diferença é a ordem entre empates de `activity_recency_rank`, que já era arbitrária). Resultado: ~56 a 62 ms. SQL em `sql/otimizacao/vw_user_engagement_analytics.sql`.
+
 ## 9. Backup e recuperação (rascunho a validar)
 
 Confirmar no painel do Supabase o plano do projeto (retenção dos backups diários e PITR).
