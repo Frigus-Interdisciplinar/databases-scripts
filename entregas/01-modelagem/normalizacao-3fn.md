@@ -14,8 +14,8 @@ O desenho operacional separa usuários, grupos, estoques, produtos, listas, conv
 
 ## Exceções e decisões explícitas
 
-- `public.users.senha` é coluna legada, além de `hash_password`; não está no modelo de autenticação usado pela Core API. Deve ser removida numa migração compatível após confirmar dependências em todos os consumidores.
-- `public.stock_products.category` replica uma classificação do produto no registro do estoque. Pode representar um snapshot da classificação no momento de inclusão, mas o significado histórico não foi confirmado; por isso não se declara formalmente que essa coluna satisfaz 3FN sem regra temporal explícita.
+- `public.users.senha` e `public.users.hash_password` coexistem como credencial. Medido em 2026-11-02 no Dev: `senha` está preenchida em 3.347 de 3.347 usuários e `hash_password` em apenas 30. Não é coluna legada vazia, então a remoção não é segura hoje. Violação de 3FN/dependência redundante a resolver com o backend: definir qual campo a Core API usa, migrar os usuários restantes e só então remover o outro.
+- `public.stock_products.category` replica `products.category` (dependência transitiva via `product_id`). Medido no Dev em 2026-11-02: 0 divergências entre as duas colunas, ou seja, hoje é redundante. Foi mantida porque o RPA (`migrar_itens_estoque`) e as procedures de compra gravam essa coluna; removê-la exige mudar esses dois lados. Se o time quiser manter um snapshot histórico, deve virar uma regra temporal explícita, não uma cópia silenciosa.
 - `public.transactions.plan_id` registra o plano associado à transação; se for exigido preservar preço/nome históricos, esses valores devem ser tratados como snapshot de negócio e documentados como tal.
 - `public.dm_*` pode conter medidas e descrições desnormalizadas intencionalmente para consulta; não é fonte transacional.
 - O modelo dimensional estrela repete atributos descritivos nas dimensões para facilitar BI e não deve ser avaliado pelas regras de normalização do OLTP.
