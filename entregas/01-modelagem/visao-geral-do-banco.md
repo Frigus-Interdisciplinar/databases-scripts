@@ -1,6 +1,6 @@
 # Visão geral do banco (FrigusDB)
 
-Resumo para leitura rápida. O modelo lógico para o DrawDB está em `modelo-logico-drawdb.sql`; os detalhes por requisito estão em `../README.md`.
+Resumo para leitura rápida. O modelo lógico para o DrawDB está em `modelo-logico-drawdb.sql`; os detalhes por requisito estão em `../README.md`. As contagens de linhas são de 02/11/2026 e mudam com o uso.
 
 PostgreSQL no Supabase. Este texto explica o que tem no banco e por quê. Números de linhas são de 02/11/2026.
 
@@ -49,7 +49,7 @@ erDiagram
 ### Por domínio
 
 **Pessoas e grupos**
-- `users` (3.347): quem usa o app. `account_type` = DOMESTIC, BUSINESS ou COMMERCIAL. Tem exclusão lógica (`deleted_at`).
+- `users` (3.356): quem usa o app. `account_type` = DOMESTIC, BUSINESS ou COMMERCIAL. Tem exclusão lógica (`deleted_at`).
 - `groups` (1.231): "casa" ou empresa. Todo grupo tem um dono (`owner_id`).
 - `user_groups` (3.793): quem participa de qual grupo e com qual papel (EDITOR ou VIEWER). Relação N:N.
 - `user_preferences`, `user_app_settings`: configurações 1:1 com o usuário (a PK é o próprio `user_id`).
@@ -57,7 +57,7 @@ erDiagram
 
 **Estoque** (o centro do sistema)
 - `stocks` (1.454): geladeira, freezer, despensa… de um grupo.
-- `products` (258): catálogo de produtos (nome, marca, categoria, onde guardar, unidade, preço).
+- `products` (260): catálogo de produtos (nome, marca, categoria, onde guardar, unidade, preço).
 - `stock_products` (33.374): um produto dentro de um estoque, com quantidade, validade, lote e status (FRESH, NEAR_EXPIRATION, EXPIRED). Único por produto + estoque + validade.
 - `stock_movements` (41.399): toda entrada (IN), saída (OUT) e ajuste (ADJUSTMENT).
 - `discard` (3.821): descartes, com motivo.

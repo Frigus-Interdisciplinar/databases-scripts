@@ -19,7 +19,7 @@ As migrations `20261102120000` a `20261102120400` corrigem o separador do `pair_
 
 - O schema e objetos necessários foram inicializados em Prod; as três migrations do pacote aparecem aplicadas no histórico remoto.
 - Na última inspeção de Prod: 15 functions, 3 procedures, 29 triggers, 163 índices, 185 constraints, 24 tabelas com RLS habilitado e uma policy. A divergência observada em relação ao inventário de Dev foi um índice e uma constraint. Não foram feitas alterações para forçar igualdade; revisar antes de qualquer replicação adicional.
-- O catálogo `governance.data_catalog` contém 658 linhas referentes a 65 objetos; o CSV nesta pasta é o export dessa tabela.
+- O catálogo `governance.data_catalog` tinha 658 linhas referentes a 65 objetos em Prod (observado em 2026-11-01). No Dev, após as migrations `20261102120400` a `120700`, tem 696 linhas referentes a 69 objetos (schema.nome), sem descrições genéricas. O CSV nesta pasta é o export do Dev.
 - Storage: os buckets e sete objetos presentes no escopo copiado foram transferidos. A cópia de objetos não faz parte de backup do PostgreSQL.
 - A fotografia de schema Prod está em `../sql/schema/frigus_prod_schema.sql`; configurações e inventário de Storage em `../supabase/storage/`; script de grants sem senha em `../sql/roles/frigus_core_api.sql`.
 - O Storage foi copiado, mas o manifesto registra zero políticas de Storage. Confirmar as permissões necessárias à aplicação antes de abrir tráfego real; detalhes em `../supabase/storage/README.md`.

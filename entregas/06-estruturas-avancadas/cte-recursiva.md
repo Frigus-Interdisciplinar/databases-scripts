@@ -16,4 +16,4 @@ A tabela segue a regra das tabelas novas: RLS habilitado e sem grants para `anon
 
 ## Estado
 
-Testada no FrigusDB Dev: 22 nós, e a raiz soma os 258 produtos do catálogo. Ainda não aplicada no Prod; ver `../README.md`.
+Testada no FrigusDB Dev: 22 nós, e a raiz soma todos os produtos do catálogo (260 na medição de 02/11/2026). Ainda não aplicada no Prod; ver `../README.md`.
