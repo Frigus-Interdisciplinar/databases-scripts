@@ -1,23 +1,14 @@
-CREATE OR REPLACE PROCEDURE public.sp_get_or_create_private_conversation(IN p_user_a integer, IN p_user_b integer, INOUT p_conversation_id integer DEFAULT NULL::integer)
+CREATE OR REPLACE PROCEDURE public.sp_get_or_create_private_conversation(IN p_user_a uuid, IN p_user_b uuid, INOUT p_conversation_id uuid DEFAULT NULL::uuid)
  LANGUAGE plpgsql
 AS $procedure$
-DECLARE
-    v_pair_key VARCHAR;
+DECLARE v_key varchar := fn_pair_key(p_user_a, p_user_b);
 BEGIN
-    v_pair_key := fn_pair_key(p_user_a, p_user_b);
-
-    SELECT id INTO p_conversation_id
-    FROM conversations
-    WHERE pair_key = v_pair_key;
-
+    IF p_user_a = p_user_b THEN RAISE EXCEPTION 'usuarios iguais'; END IF;
+    SELECT id INTO p_conversation_id FROM conversations WHERE pair_key = v_key;
     IF p_conversation_id IS NULL THEN
-        INSERT INTO conversations (conversation_type)
-        VALUES ('PRIVATE')
+        INSERT INTO conversations (conversation_type, pair_key) VALUES ('PRIVATE', v_key)
         RETURNING id INTO p_conversation_id;
-
         INSERT INTO conversation_participants (conversation_id, user_id)
         VALUES (p_conversation_id, p_user_a), (p_conversation_id, p_user_b);
-        -- trg_conversation_participants_pair_key seta o pair_key após o 2º insert acima
     END IF;
-END;
-$procedure$
+END $procedure$

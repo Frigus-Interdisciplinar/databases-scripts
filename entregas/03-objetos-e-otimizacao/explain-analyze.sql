@@ -28,3 +28,7 @@ EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 SELECT * FROM dw.vw_dau
 WHERE day >= CURRENT_DATE - 30
 ORDER BY day;
+
+-- Consulta pesada: a versão antiga da view fazia join de mensagens x movimentos x pedidos antes de agregar.
+EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
+SELECT * FROM public.vw_user_engagement_analytics;

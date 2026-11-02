@@ -4,6 +4,8 @@ Inventário do schema de Prod verificado em 2026-11-01: 15 functions, 3 procedur
 
 ## Regras de negócio
 
+Correções desta entrega (migrations `20261102120000` e `20261102120100`): `fn_pair_key` passou a receber `uuid` e a usar `-` como separador, igual às conversas existentes; as três procedures passaram a receber `uuid` para usuário, lista e conversa, e `sp_purchase_shopping_list_item` soma a quantidade no estoque sem depender de trigger em `stock_movements`, que não existe no banco.
+
 Exemplos de funções: `public.fn_compute_product_status`, `public.fn_low_stock_products`, `public.fn_suggest_recipes` e `public.fn_pair_key`. Procedures de negócio: `public.sp_close_shopping_list`, `public.sp_get_or_create_private_conversation` e `public.sp_purchase_shopping_list_item`. `dw.sp_load_all()` é uma function `RETURNS void`, não uma procedure, e executa a carga do Data Mart.
 
 ## Triggers de auditoria

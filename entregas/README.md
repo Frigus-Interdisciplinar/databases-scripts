@@ -11,9 +11,11 @@ Esta pasta mapeia os requisitos da rubrica aos artefatos e registra o que foi ob
 | Functions, procedures, auditoria e índices | [`03-objetos-e-otimizacao/objetos-sql.md`](03-objetos-e-otimizacao/objetos-sql.md), `../sql/functions/`, `../sql/procedures/`, `../sql/triggers/` e `03-objetos-e-otimizacao/explain-analyze-dev.md` |
 | Catálogo, segurança, backup e recuperação | [`04-governanca/catalogo-de-dados.csv`](04-governanca/catalogo-de-dados.csv), [`04-governanca/seguranca-dev.md`](04-governanca/seguranca-dev.md) e [`04-governanca/backup-recuperacao.md`](04-governanca/backup-recuperacao.md) |
 | DAU | [`05-monitoramento/README.md`](05-monitoramento/README.md), migration e patch da Core API |
-| Estruturas avançadas | [`06-estruturas-avancadas/cte-recursiva.md`](06-estruturas-avancadas/cte-recursiva.md) |
+| Estruturas avançadas | [`06-estruturas-avancadas/cte-recursiva.md`](06-estruturas-avancadas/cte-recursiva.md) e migration `20261102120200` |
 
 ## Estado verificado
+
+As migrations `20261102120000` a `20261102120400` corrigem o separador do `pair_key`, as procedures com `uuid`, a árvore de categorias (CTE recursiva), a otimização da view de engajamento e as descrições do catálogo. Foram testadas em transação com rollback no Dev e ainda **não foram aplicadas em Prod**. Aplicar em Prod exige aprovação, e a aplicação precisa acontecer antes de a Core API usar as procedures.
 
 - O schema e objetos necessários foram inicializados em Prod; as três migrations do pacote aparecem aplicadas no histórico remoto.
 - Na última inspeção de Prod: 15 functions, 3 procedures, 29 triggers, 163 índices, 185 constraints, 24 tabelas com RLS habilitado e uma policy. A divergência observada em relação ao inventário de Dev foi um índice e uma constraint. Não foram feitas alterações para forçar igualdade; revisar antes de qualquer replicação adicional.
