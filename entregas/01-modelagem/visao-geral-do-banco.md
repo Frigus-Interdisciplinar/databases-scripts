@@ -2,6 +2,10 @@
 
 Resumo para leitura rápida. O modelo lógico para o DrawDB está em `modelo-logico-drawdb.sql`; os detalhes por requisito estão em `../README.md`. As contagens de linhas são de 02/11/2026 e mudam com o uso.
 
+![Modelo lógico do schema public](modelo-logico.png)
+
+Para reabrir o diagrama no DrawDB: File > Import from SQL, banco PostgreSQL, e colar o conteúdo de `modelo-logico-drawdb.sql` (45 tabelas e 72 FKs; enums viram `varchar(32)`).
+
 PostgreSQL no Supabase. Este texto explica o que tem no banco e por quê. Números de linhas são de 02/11/2026.
 
 ## 1. Visão geral
