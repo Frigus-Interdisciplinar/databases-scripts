@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="1200" height="760" fill="#ffffff"/>
+  <text x="600" y="40" text-anchor="middle" font-size="26" font-weight="700" fill="#13aa52">MongoDB — modelo conceitual (banco frigus_ai)</text>
+  <text x="600" y="66" text-anchor="middle" font-size="14" fill="#555">3 coleções de documentos; relacionamento por referência via user_id (usuário vem do Postgres)</text>
+
+  <!-- agent_chats -->
+  <rect x="30" y="100" width="360" height="560" rx="10" fill="#f1faf4" stroke="#13aa52" stroke-width="2"/>
+  <rect x="30" y="100" width="360" height="40" rx="10" fill="#13aa52"/>
+  <text x="210" y="127" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">coleção: agent_chats</text>
+  <text x="46" y="170" font-size="13" fill="#555">um documento por sessão de chat</text>
+  <g font-family="Consolas, monospace" font-size="14" fill="#222">
+    <text x="46" y="200">{</text>
+    <text x="62" y="224"><tspan font-weight="700" fill="#b8860b">_id</tspan>: ObjectId</text>
+    <text x="62" y="248"><tspan font-weight="700" fill="#c0392b">session_id</tspan>: str  (índice único)</text>
+    <text x="62" y="272"><tspan font-weight="700" fill="#2471a3">user_id</tspan>: str  (ref.)</text>
+    <text x="62" y="296">messages: [</text>
+    <text x="78" y="320">{ role: str, content: str },</text>
+    <text x="78" y="344">{ role: str, content: str } ]</text>
+    <text x="62" y="372">resume: str</text>
+    <text x="62" y="396">resumido_ate: int</text>
+    <text x="62" y="420">resume_relevante: bool</text>
+    <text x="62" y="444">indexado_ate: int</text>
+    <text x="62" y="468">created_at: datetime</text>
+    <text x="62" y="492">updated_at: datetime</text>
+    <text x="46" y="516">}</text>
+  </g>
+  <rect x="46" y="540" width="328" height="100" rx="6" fill="#fff" stroke="#13aa52" stroke-dasharray="5 4"/>
+  <text x="58" y="562" font-size="13" font-weight="700" fill="#13aa52">Subdocumentos embutidos</text>
+  <text x="58" y="584" font-size="13" fill="#333">messages[] = array de subdocumentos</text>
+  <text x="58" y="604" font-size="13" fill="#333">(embedding) — $push a cada turno</text>
+  <text x="58" y="624" font-size="13" fill="#333">resume espelhado no Qdrant</text>
+
+  <!-- user_fatos -->
+  <rect x="420" y="100" width="360" height="400" rx="10" fill="#f1faf4" stroke="#13aa52" stroke-width="2"/>
+  <rect x="420" y="100" width="360" height="40" rx="10" fill="#13aa52"/>
+  <text x="600" y="127" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">coleção: user_fatos</text>
+  <text x="436" y="170" font-size="13" fill="#555">um documento por usuário (memória longa)</text>
+  <g font-family="Consolas, monospace" font-size="14" fill="#222">
+    <text x="436" y="200">{</text>
+    <text x="452" y="224"><tspan font-weight="700" fill="#b8860b">_id</tspan>: ObjectId</text>
+    <text x="452" y="248"><tspan font-weight="700" fill="#2471a3">user_id</tspan>: str  (ref.)</text>
+    <text x="452" y="272">alergias: [str]</text>
+    <text x="452" y="296">preferencias: [str]</text>
+    <text x="452" y="320">restricoes: [str]</text>
+    <text x="452" y="344">habitos: [str]</text>
+    <text x="452" y="368">recipe_preferences: {</text>
+    <text x="468" y="392">…campos de preferência }</text>
+    <text x="452" y="416">updated_at: datetime</text>
+    <text x="436" y="440">}</text>
+  </g>
+  <text x="436" y="474" font-size="13" fill="#333">recipe_preferences = subdocumento (dot-notation)</text>
+
+  <!-- recipe_favorites -->
+  <rect x="810" y="100" width="360" height="400" rx="10" fill="#f1faf4" stroke="#13aa52" stroke-width="2"/>
+  <rect x="810" y="100" width="360" height="40" rx="10" fill="#13aa52"/>
+  <text x="990" y="127" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">coleção: recipe_favorites</text>
+  <text x="826" y="170" font-size="13" fill="#555">um documento por receita favoritada</text>
+  <g font-family="Consolas, monospace" font-size="14" fill="#222">
+    <text x="826" y="200">{</text>
+    <text x="842" y="224"><tspan font-weight="700" fill="#b8860b">_id</tspan>: ObjectId</text>
+    <text x="842" y="248"><tspan font-weight="700" fill="#2471a3">user_id</tspan>: str  (ref.)</text>
+    <text x="842" y="272"><tspan font-weight="700" fill="#c0392b">source</tspan>: str</text>
+    <text x="842" y="296"><tspan font-weight="700" fill="#c0392b">recipe_id</tspan>: int</text>
+    <text x="842" y="320">name: str</text>
+    <text x="842" y="344">image_url: str | null</text>
+    <text x="842" y="368">created_at: datetime</text>
+    <text x="826" y="392">}</text>
+  </g>
+  <text x="826" y="426" font-size="13" fill="#333">índice único composto:</text>
+  <text x="826" y="446" font-size="13" fill="#c0392b" font-family="Consolas, monospace">(user_id, source, recipe_id)</text>
+
+  <!-- relação -->
+  <path d="M 210 100 V 84 H 990 V 100 M 600 84 V 100" fill="none" stroke="#2471a3" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="600" y="80" text-anchor="middle" font-size="12" fill="#2471a3">todas referenciam user_id (agent_chats e recipe_favorites: N por usuário; user_fatos: 1)</text>
+
+  <!-- postgres -->
+  <rect x="470" y="540" width="260" height="70" rx="8" fill="#eaf2f8" stroke="#2471a3" stroke-width="2"/>
+  <text x="600" y="570" text-anchor="middle" font-size="15" font-weight="700" fill="#2471a3">Postgres: users</text>
+  <text x="600" y="592" text-anchor="middle" font-size="13" fill="#333">id (user_id) — fora do Mongo</text>
+  <line x1="600" y1="540" x2="600" y2="500" stroke="#2471a3" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 600 540 L 210 540" stroke="none"/>
+
+  <!-- legenda -->
+  <rect x="30" y="690" width="1140" height="50" rx="8" fill="#fafafa" stroke="#ddd"/>
+  <text x="46" y="720" font-size="13" fill="#333"><tspan font-weight="700" fill="#b8860b">■ chave primária (_id)</tspan>     <tspan font-weight="700" fill="#c0392b">■ chave de negócio / índice único</tspan>     <tspan font-weight="700" fill="#2471a3">■ referência a outro sistema (user_id)</tspan>     Também: graph_checkpoints / graph_checkpoint_writes (MongoDBSaver do LangGraph)</text>
+</svg>

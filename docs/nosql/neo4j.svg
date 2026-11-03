@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#555"/></marker>
+  </defs>
+  <rect width="1200" height="720" fill="#ffffff"/>
+  <text x="600" y="40" text-anchor="middle" font-size="26" font-weight="700" fill="#018bff">Neo4j — modelo conceitual (grafo de receitas)</text>
+  <text x="600" y="66" text-anchor="middle" font-size="14" fill="#555">Nós com propriedades e relacionamentos direcionados; projeção do Postgres sincronizada com MERGE</text>
+
+  <!-- Recipe node -->
+  <circle cx="260" cy="260" r="110" fill="#e8f3ff" stroke="#018bff" stroke-width="3"/>
+  <text x="260" y="255" text-anchor="middle" font-size="22" font-weight="700" fill="#018bff">:Recipe</text>
+  <text x="260" y="282" text-anchor="middle" font-size="13" fill="#333">nó (label)</text>
+
+  <!-- Ingredient node -->
+  <circle cx="940" cy="260" r="110" fill="#fff4e0" stroke="#e08a00" stroke-width="3"/>
+  <text x="940" y="255" text-anchor="middle" font-size="22" font-weight="700" fill="#e08a00">:Ingredient</text>
+  <text x="940" y="282" text-anchor="middle" font-size="13" fill="#333">nó (label)</text>
+
+  <!-- REQUIRES -->
+  <line x1="372" y1="260" x2="826" y2="260" stroke="#555" stroke-width="3" marker-end="url(#a)"/>
+  <rect x="520" y="242" width="160" height="36" rx="18" fill="#fff" stroke="#555" stroke-width="2"/>
+  <text x="600" y="266" text-anchor="middle" font-size="16" font-weight="700" fill="#333">[:REQUIRES]</text>
+  <rect x="505" y="296" width="190" height="62" rx="6" fill="#f5f5f5" stroke="#bbb"/>
+  <text x="600" y="318" text-anchor="middle" font-size="12" font-weight="700" fill="#555">propriedades da relação</text>
+  <text x="600" y="337" text-anchor="middle" font-size="13" font-family="Consolas, monospace" fill="#222">quantity: float</text>
+  <text x="600" y="352" text-anchor="middle" font-size="13" font-family="Consolas, monospace" fill="#222">unit: str</text>
+
+  <!-- SIMILAR_TO self loop -->
+  <path d="M 190 160 C 130 70, 330 70, 330 160" fill="none" stroke="#555" stroke-width="3" marker-end="url(#a)"/>
+  <rect x="190" y="82" width="140" height="30" rx="15" fill="#fff" stroke="#555" stroke-width="2"/>
+  <text x="260" y="103" text-anchor="middle" font-size="15" font-weight="700" fill="#333">[:SIMILAR_TO]</text>
+
+  <!-- Propriedades Recipe -->
+  <rect x="40" y="400" width="440" height="270" rx="8" fill="#e8f3ff" stroke="#018bff" stroke-width="1.5"/>
+  <text x="56" y="428" font-size="16" font-weight="700" fill="#018bff">Propriedades de :Recipe</text>
+  <g font-family="Consolas, monospace" font-size="14" fill="#222">
+    <text x="56" y="458"><tspan font-weight="700" fill="#b8860b">uid</tspan>: str (UniqueId)</text>
+    <text x="56" y="482"><tspan font-weight="700" fill="#c0392b">key</tspan>: str  único  "local:{id}"</text>
+    <text x="56" y="506">source: str  ("local")</text>
+    <text x="56" y="530">external_id: int</text>
+    <text x="56" y="554">name: str</text>
+    <text x="56" y="578">ingredients_complete: bool</text>
+    <text x="56" y="602">fingerprint: str  (sha1)</text>
+    <text x="56" y="626">preparation_time_minutes: int</text>
+    <text x="56" y="650">difficulty: str</text>
+  </g>
+
+  <!-- Propriedades Ingredient -->
+  <rect x="720" y="400" width="440" height="190" rx="8" fill="#fff4e0" stroke="#e08a00" stroke-width="1.5"/>
+  <text x="736" y="428" font-size="16" font-weight="700" fill="#e08a00">Propriedades de :Ingredient</text>
+  <g font-family="Consolas, monospace" font-size="14" fill="#222">
+    <text x="736" y="458"><tspan font-weight="700" fill="#b8860b">uid</tspan>: str (UniqueId)</text>
+    <text x="736" y="482"><tspan font-weight="700" fill="#c0392b">key</tspan>: str  único  "product:{id}"</text>
+    <text x="736" y="506">name: str</text>
+    <text x="736" y="530">category: str</text>
+  </g>
+
+  <!-- Cypher -->
+  <rect x="520" y="400" width="180" height="0" fill="none"/>
+  <rect x="720" y="606" width="440" height="84" rx="8" fill="#fafafa" stroke="#ddd"/>
+  <text x="736" y="630" font-size="13" font-weight="700" fill="#333">Consulta de sugestão (Cypher)</text>
+  <text x="736" y="652" font-size="12.5" font-family="Consolas, monospace" fill="#222">MATCH (r:Recipe)-[:REQUIRES]-&gt;(i:Ingredient)</text>
+  <text x="736" y="672" font-size="12.5" font-family="Consolas, monospace" fill="#222">WHERE i.key IN $disponiveis  RETURN r, score</text>
+</svg>
