@@ -1,0 +1,1 @@
+CREATE TRIGGER trg_products_propagate_category AFTER UPDATE OF category ON public.products FOR EACH ROW WHEN ((old.category IS DISTINCT FROM new.category)) EXECUTE FUNCTION trg_fn_products_propagate_category()

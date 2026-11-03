@@ -902,10 +902,11 @@ PK: `PRIMARY KEY (user_id)`
 | `deleted_at` | `timestamp without time zone` | sim | `` |
 | `role` | `user_role_enum` | nao | `'USER'::user_role_enum` |
 | `hash_password` | `character varying` | sim | `` |
-| `senha` | `character varying(100)` | sim | `'VAZIO'::character varying` |
 | `google_id` | `character varying(255)` | sim | `` |
 | `token_version` | `integer` | nao | `0` |
 | `profile_picture_url` | `character varying(2048)` | sim | `` |
+
+Alterações posteriores a este snapshot: `senha` foi removida (migration `20261102120800`); `email_verified`, `plan_selection_required` e `pending_plan_transaction_id` foram adicionadas (migration `20261102011317`).
 
 PK: `PRIMARY KEY (id)`
 

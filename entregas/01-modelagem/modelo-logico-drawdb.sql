@@ -636,7 +636,6 @@ CREATE TABLE users (
   deleted_at timestamp,
   role varchar(32) NOT NULL,
   hash_password varchar,
-  senha varchar(100),
   google_id varchar(255),
   token_version integer NOT NULL,
   profile_picture_url varchar(2048),

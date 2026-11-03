@@ -9,17 +9,26 @@ Esta pasta mapeia os requisitos da rubrica aos artefatos e registra o que foi ob
 | ETL, Data Mart, CTEs e Window Functions | [`02-engenharia-de-dados/data-mart-etl.md`](02-engenharia-de-dados/data-mart-etl.md), definições em `../sql/views/` e rotina em `../sql/functions/dw__sp_load_all.sql` |
 | RPA legado → Frigus | [`08-integracao-rpa/README.md`](08-integracao-rpa/README.md) e [repositório RPA](https://github.com/Frigus-Interdisciplinar/frigus-rpa), mantido fora deste repositório |
 | Functions, procedures, auditoria e índices | [`03-objetos-e-otimizacao/objetos-sql.md`](03-objetos-e-otimizacao/objetos-sql.md), `../sql/functions/`, `../sql/procedures/`, `../sql/triggers/` e `03-objetos-e-otimizacao/explain-analyze-dev.md` |
-| Catálogo, segurança, backup e recuperação | [`04-governanca/catalogo-de-dados.csv`](04-governanca/catalogo-de-dados.csv), [`04-governanca/seguranca-dev.md`](04-governanca/seguranca-dev.md) e [`04-governanca/backup-recuperacao.md`](04-governanca/backup-recuperacao.md) |
+| Catálogo, segurança, backup e recuperação | [`04-governanca/catalogo-de-dados.csv`](04-governanca/catalogo-de-dados.csv), [`04-governanca/niveis-de-acesso.md`](04-governanca/niveis-de-acesso.md), [`04-governanca/seguranca-dev.md`](04-governanca/seguranca-dev.md) e [`04-governanca/backup-recuperacao.md`](04-governanca/backup-recuperacao.md) |
 | DAU | [`05-monitoramento/README.md`](05-monitoramento/README.md), migration e patch da Core API |
 | Estruturas avançadas | [`06-estruturas-avancadas/cte-recursiva.md`](06-estruturas-avancadas/cte-recursiva.md) e migration `20261102120200` |
 
 ## Estado verificado
 
-As migrations `20261102120000` a `20261102120400` corrigem o separador do `pair_key`, as procedures com `uuid`, a árvore de categorias (CTE recursiva), a otimização da view de engajamento e as descrições do catálogo. Foram aplicadas no Dev. A `20261102120500` acrescenta descrições de negócio para os 36 objetos que faltavam e para colunas-chave; A `20261102120600` completa as colunas restantes com descrições inferidas do nome, do tipo e das chaves estrangeiras (606 colunas, para revisão com o backend). Não restam descrições genéricas no catálogo. **Nada foi aplicado em Prod.** Aplicar em Prod exige aprovação, e a aplicação precisa acontecer antes de a Core API usar as procedures.
+As migrations `20261102120000` a `20261102121100` completam a entrega. Foram testadas em transação com rollback e aplicadas no Dev:
+
+- `120000` e `120100`: separador do `pair_key` e procedures com `uuid`.
+- `120200` e `120300`: árvore de categorias (CTE recursiva) e otimização da view de engajamento.
+- `120400` a `120700` e `121100`: descrições do catálogo. As de colunas da `120600` são inferidas do nome, do tipo e das chaves estrangeiras, e devem ser revisadas com o backend.
+- `120800`: remove `users.senha`, que guardava só o placeholder `VAZIO` e não era usada.
+- `120900`: mantém `stock_products.category` igual a `products.category` por trigger.
+- `121000`: níveis de acesso e classificação dos dados do catálogo (`governance.access_levels`).
+
+**Nada foi aplicado em Prod.** Aplicar em Prod exige aprovação, e a aplicação precisa acontecer antes de a Core API usar as procedures. Antes de aplicar a `120800` em Prod, conferir em `pg_stat_statements` se alguma consulta de lá cita `senha`.
 
 - O schema e objetos necessários foram inicializados em Prod; as três migrations do pacote aparecem aplicadas no histórico remoto.
 - Na última inspeção de Prod: 15 functions, 3 procedures, 29 triggers, 163 índices, 185 constraints, 24 tabelas com RLS habilitado e uma policy. A divergência observada em relação ao inventário de Dev foi um índice e uma constraint. Não foram feitas alterações para forçar igualdade; revisar antes de qualquer replicação adicional.
-- O catálogo `governance.data_catalog` tinha 658 linhas referentes a 65 objetos em Prod (observado em 2026-11-01). No Dev, após as migrations `20261102120400` a `120700`, tem 696 linhas referentes a 69 objetos (schema.nome), sem descrições genéricas. O CSV nesta pasta é o export do Dev.
+- O catálogo `governance.data_catalog` tinha 658 linhas referentes a 65 objetos em Prod (observado em 2026-11-01). No Dev, após as migrations `20261102120400` a `121100`, tem 701 linhas referentes a 70 objetos (schema.nome), todas com nível de acesso, classificação e descrição. O CSV nesta pasta é o export do Dev.
 - Storage: os buckets e sete objetos presentes no escopo copiado foram transferidos. A cópia de objetos não faz parte de backup do PostgreSQL.
 - A fotografia de schema Prod está em `../sql/schema/frigus_prod_schema.sql`; configurações e inventário de Storage em `../supabase/storage/`; script de grants sem senha em `../sql/roles/frigus_core_api.sql`.
 - O Storage foi copiado, mas o manifesto registra zero políticas de Storage. Confirmar as permissões necessárias à aplicação antes de abrir tráfego real; detalhes em `../supabase/storage/README.md`.
