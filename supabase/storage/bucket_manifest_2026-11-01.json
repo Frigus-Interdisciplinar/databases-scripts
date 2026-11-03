@@ -1,0 +1,42 @@
+{
+  "sourceProject": {
+    "name": "FrigusDB Dev",
+    "ref": "qskdjqqyuejeyzpkszyf",
+    "region": "sa-east-1",
+    "capturedAt": "2026-11-01"
+  },
+  "targetProject": {
+    "name": "Frigus",
+    "ref": "orucfmpyvbrfldvvqtus"
+  },
+  "buckets": [
+    {
+      "id": "products",
+      "name": "products",
+      "public": false,
+      "fileSizeLimitBytes": 716800,
+      "allowedMimeTypes": ["image/png", "image/jpeg", "image/jpg"],
+      "objectCount": 2,
+      "objects": [
+        {"key": "ingredients/.emptyFolderPlaceholder", "bytes": 0, "contentType": "application/octet-stream"},
+        {"key": "products/.emptyFolderPlaceholder", "bytes": 0, "contentType": "application/octet-stream"}
+      ]
+    },
+    {
+      "id": "profile-picture",
+      "name": "profile-picture",
+      "public": true,
+      "fileSizeLimitBytes": 256000,
+      "allowedMimeTypes": ["image/png", "image/jpeg", "image/jpg"],
+      "objectCount": 5,
+      "objects": [
+        {"key": "commercial/.emptyFolderPlaceholder", "bytes": 0, "contentType": "application/octet-stream"},
+        {"key": "domestic/.emptyFolderPlaceholder", "bytes": 0, "contentType": "application/octet-stream"},
+        {"key": "domestic/codex-upload-check-16ebfc97-0d2d-48e0-81e7-adad7891ba56.png", "bytes": 68, "contentType": "image/png", "reviewBeforeCopy": true},
+        {"key": "enterprise/.emptyFolderPlaceholder", "bytes": 0, "contentType": "application/octet-stream"},
+        {"key": "groups/.emptyFolderPlaceholder", "bytes": 0, "contentType": "application/octet-stream"}
+      ]
+    }
+  ],
+  "storagePolicies": []
+}

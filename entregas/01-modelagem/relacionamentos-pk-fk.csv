@@ -1,0 +1,77 @@
+child_schema,child_table,name,definition,parent_schema,parent_table,child_min,parent_to_child
+dw,dim_stock,dim_stock_group_key_fkey,FOREIGN KEY (group_key) REFERENCES dw.dim_group(group_key),dw,dim_group,0..1,1 : 0..N
+dw,fact_stock_movement,fact_stock_movement_date_key_fkey,FOREIGN KEY (date_key) REFERENCES dw.dim_date(date_key),dw,dim_date,1,1 : 0..N
+dw,fact_stock_movement,fact_stock_movement_group_key_fkey,FOREIGN KEY (group_key) REFERENCES dw.dim_group(group_key),dw,dim_group,1,1 : 0..N
+dw,fact_stock_movement,fact_stock_movement_product_key_fkey,FOREIGN KEY (product_key) REFERENCES dw.dim_product(product_key),dw,dim_product,1,1 : 0..N
+dw,fact_stock_movement,fact_stock_movement_stock_key_fkey,FOREIGN KEY (stock_key) REFERENCES dw.dim_stock(stock_key),dw,dim_stock,1,1 : 0..N
+dw,fact_stock_movement,fact_stock_movement_user_key_fkey,FOREIGN KEY (user_key) REFERENCES dw.dim_user(user_key),dw,dim_user,0..1,1 : 0..N
+dw,user_daily_access,user_daily_access_user_id_fkey,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,advertisements,advertisements_advertiser_id_fkey,FOREIGN KEY (advertiser_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,business_expenses,business_expenses_created_by_fkey,FOREIGN KEY (created_by) REFERENCES users(id),public,users,1,1 : 0..N
+public,business_expenses,business_expenses_group_id_fkey,FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE RESTRICT,public,groups,1,1 : 0..N
+public,business_expenses,business_expenses_shopping_list_id_fkey,FOREIGN KEY (shopping_list_id) REFERENCES shopping_lists(id) ON DELETE RESTRICT,public,shopping_lists,0..1,1 : 0..1
+public,conversation_participants,fk_conversation_participants_conversation_id_conversations,FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,public,conversations,1,1 : 0..N
+public,conversation_participants,fk_conversation_participants_user_id_users,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,conversations,fk_conversations_group_id_groups,FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE SET NULL,public,groups,0..1,1 : 0..N
+public,discard,discard_movement_id_fkey,FOREIGN KEY (movement_id) REFERENCES stock_movements(id),public,stock_movements,0..1,1 : 0..1
+public,discard,fk_discard_stock_product_id_stock_products,FOREIGN KEY (stock_product_id) REFERENCES stock_products(id) ON DELETE CASCADE,public,stock_products,1,1 : 0..N
+public,food_purchase_lines,food_purchase_lines_product_id_fkey,FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,public,products,0..1,1 : 0..N
+public,food_purchase_lines,food_purchase_lines_purchase_id_fkey,FOREIGN KEY (purchase_id) REFERENCES food_purchases(id),public,food_purchases,1,1 : 0..N
+public,food_purchase_lines,food_purchase_lines_stock_product_id_fkey,FOREIGN KEY (stock_product_id) REFERENCES stock_products(id) ON DELETE SET NULL,public,stock_products,0..1,1 : 0..N
+public,food_purchase_revisions,food_purchase_revisions_changed_by_fkey,FOREIGN KEY (changed_by) REFERENCES users(id),public,users,1,1 : 0..N
+public,food_purchase_revisions,food_purchase_revisions_purchase_id_fkey,FOREIGN KEY (purchase_id) REFERENCES food_purchases(id),public,food_purchases,1,1 : 0..N
+public,food_purchases,food_purchases_group_id_fkey,FOREIGN KEY (group_id) REFERENCES groups(id),public,groups,1,1 : 0..N
+public,group_invitations,group_invitations_group_id_fkey,FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,public,groups,1,1 : 0..N
+public,groups,fk_groups_owner_id_users,FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,public,users,0..1,1 : 0..N
+public,message_attachments,fk_message_attachments_message_id_messages,FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,public,messages,1,1 : 0..N
+public,message_reactions,message_reactions_message_id_fkey,FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,public,messages,1,1 : 0..N
+public,message_reactions,message_reactions_user_id_fkey,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,message_reads,fk_message_reads_conversation_id_participants,"FOREIGN KEY (conversation_id, user_id) REFERENCES conversation_participants(conversation_id, user_id) ON DELETE CASCADE",public,conversation_participants,1,1 : 0..N
+public,message_reads,fk_message_reads_message_id_messages,"FOREIGN KEY (message_id, conversation_id) REFERENCES messages(id, conversation_id) ON DELETE CASCADE",public,messages,1,1 : 0..N
+public,messages,fk_messages_conversation_id_conversations,FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,public,conversations,1,1 : 0..N
+public,messages,fk_messages_conversation_id_participants,"FOREIGN KEY (conversation_id, sender_id) REFERENCES conversation_participants(conversation_id, user_id)",public,conversation_participants,1,1 : 0..N
+public,messages,fk_messages_related_shopping_list_product_id_slp,FOREIGN KEY (related_shopping_list_product_id) REFERENCES shopping_list_products(id) ON DELETE SET NULL,public,shopping_list_products,0..1,1 : 0..N
+public,messages,fk_messages_sender_id_users,FOREIGN KEY (sender_id) REFERENCES users(id),public,users,1,1 : 0..N
+public,money_allocations,money_allocations_exit_id_fkey,FOREIGN KEY (exit_id) REFERENCES money_exits(id) ON DELETE CASCADE,public,money_exits,1,1 : 0..N
+public,money_allocations,money_allocations_supply_id_fkey,FOREIGN KEY (supply_id) REFERENCES money_supplies(id) ON DELETE SET NULL,public,money_supplies,0..1,1 : 0..N
+public,money_exits,money_exits_group_id_fkey,FOREIGN KEY (group_id) REFERENCES groups(id),public,groups,1,1 : 0..N
+public,money_exits,money_exits_movement_id_fkey,FOREIGN KEY (movement_id) REFERENCES stock_movements(id) ON DELETE SET NULL,public,stock_movements,0..1,1 : 0..N
+public,money_exits,money_exits_stock_product_id_fkey,FOREIGN KEY (stock_product_id) REFERENCES stock_products(id) ON DELETE SET NULL,public,stock_products,0..1,1 : 0..N
+public,money_supplies,money_supplies_purchase_line_id_fkey,FOREIGN KEY (purchase_line_id) REFERENCES food_purchase_lines(id),public,food_purchase_lines,0..1,1 : 0..1
+public,money_supplies,money_supplies_stock_product_id_fkey,FOREIGN KEY (stock_product_id) REFERENCES stock_products(id) ON DELETE SET NULL,public,stock_products,0..1,1 : 0..N
+public,notifications,fk_notifications_group_id_groups,FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,public,groups,0..1,1 : 0..N
+public,notifications,fk_notifications_recipient_user_id_users,FOREIGN KEY (recipient_user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,password_reset_tokens,password_reset_tokens_user_id_fkey,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,products,products_owner_group_id_fkey,FOREIGN KEY (owner_group_id) REFERENCES groups(id) ON DELETE RESTRICT,public,groups,0..1,1 : 0..N
+public,receipt_draft_lines,receipt_draft_lines_matched_product_id_fkey,FOREIGN KEY (matched_product_id) REFERENCES products(id),public,products,0..1,1 : 0..N
+public,receipt_draft_lines,receipt_draft_lines_receipt_id_fkey,FOREIGN KEY (receipt_id) REFERENCES receipt_drafts(id) ON DELETE CASCADE,public,receipt_drafts,1,1 : 0..N
+public,receipt_drafts,receipt_drafts_created_by_fkey,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,receipt_drafts,receipt_drafts_stock_id_fkey,FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,public,stocks,1,1 : 0..N
+public,recipe_favorites,recipe_favorites_recipe_id_fkey,FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,public,recipes,1,1 : 0..N
+public,recipe_favorites,recipe_favorites_user_id_fkey,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,recipe_ingredients,fk_recipe_ingredients_product_id_products,FOREIGN KEY (product_id) REFERENCES products(id),public,products,1,1 : 0..N
+public,recipe_ingredients,fk_recipe_ingredients_recipe_id_recipes,FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,public,recipes,1,1 : 0..N
+public,recipe_suggestions,fk_recipe_suggestions_recipe_id_recipes,FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,public,recipes,1,1 : 0..N
+public,recipe_suggestions,fk_recipe_suggestions_stock_id_stocks,FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,public,stocks,1,1 : 0..N
+public,requests,fk_requests_conversation_id_conversations,FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE SET NULL,public,conversations,0..1,1 : 0..N
+public,requests,fk_requests_message_id_messages,"FOREIGN KEY (message_id, conversation_id) REFERENCES messages(id, conversation_id) ON DELETE SET NULL",public,messages,0..1,1 : 0..N
+public,requests,fk_requests_product_id_products,FOREIGN KEY (product_id) REFERENCES products(id),public,products,1,1 : 0..N
+public,requests,fk_requests_stock_id_stocks,FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,public,stocks,1,1 : 0..N
+public,requests,fk_requests_user_id_users,FOREIGN KEY (user_id) REFERENCES users(id),public,users,1,1 : 0..N
+public,shopping_list_products,fk_shopping_list_products_list_id_shopping_lists,FOREIGN KEY (list_id) REFERENCES shopping_lists(id) ON DELETE CASCADE,public,shopping_lists,1,1 : 0..N
+public,shopping_list_products,fk_shopping_list_products_product_id_products,FOREIGN KEY (product_id) REFERENCES products(id),public,products,1,1 : 0..N
+public,shopping_lists,fk_shopping_lists_stock_id_stocks,FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,public,stocks,1,1 : 0..N
+public,stock_movements,fk_stock_movements_stock_product_id_stock_products,FOREIGN KEY (stock_product_id) REFERENCES stock_products(id) ON DELETE CASCADE,public,stock_products,1,1 : 0..N
+public,stock_movements,fk_stock_movements_user_id_users,FOREIGN KEY (user_id) REFERENCES users(id),public,users,1,1 : 0..N
+public,stock_products,fk_stock_products_product_id_products,FOREIGN KEY (product_id) REFERENCES products(id),public,products,1,1 : 0..N
+public,stock_products,fk_stock_products_stock_id_stocks,FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,public,stocks,1,1 : 0..N
+public,stocks,fk_stocks_group_id_groups,FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,public,groups,1,1 : 0..N
+public,subscriptions,fk_subscriptions_plan_id_plans,FOREIGN KEY (plan_id) REFERENCES plans(id),public,plans,1,1 : 0..N
+public,subscriptions,fk_subscriptions_user_id_users,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,transaction_events,fk_transaction_events_transaction_id_transactions,FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,public,transactions,1,1 : 0..N
+public,transactions,fk_transactions_plan_id_plans,FOREIGN KEY (plan_id) REFERENCES plans(id),public,plans,1,1 : 0..N
+public,transactions,fk_transactions_subscription_id_subscriptions,FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE CASCADE,public,subscriptions,0..1,1 : 0..N
+public,transactions,fk_transactions_user_id_users,FOREIGN KEY (user_id) REFERENCES users(id),public,users,1,1 : 0..N
+public,user_groups,fk_user_groups_group_id_groups,FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,public,groups,1,1 : 0..N
+public,user_groups,fk_user_groups_user_id_users,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..N
+public,user_preferences,user_preferences_user_id_fkey,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,public,users,1,1 : 0..1

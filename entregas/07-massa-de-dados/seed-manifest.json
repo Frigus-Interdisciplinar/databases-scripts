@@ -1,0 +1,28 @@
+{
+  "as_of": "2026-11-01",
+  "rows_by_table": {
+    "plans": 5,
+    "users": 3000,
+    "groups": 900,
+    "user_groups": 3486,
+    "stocks": 1093,
+    "products": 80,
+    "stock_products": 32436,
+    "recipes": 220,
+    "recipe_ingredients": 1307,
+    "recipe_suggestions": 2000,
+    "shopping_lists": 2000,
+    "shopping_list_products": 13763,
+    "discard": 3892,
+    "stock_movements": 42166,
+    "conversations": 1500,
+    "conversation_participants": 4301,
+    "messages": 19377,
+    "message_attachments": 1900,
+    "message_reads": 25572,
+    "subscriptions": 3457,
+    "transactions": 7671,
+    "requests": 1600
+  },
+  "total_rows": 171726
+}

@@ -1,6 +1,6 @@
 # Modelagem de Dados — revisão e explicação (Frigus)
 
-Revisão feita em 02/11/2026 direto no Postgres (Supabase) em modo somente leitura, mais o RPA (`Inter/rpa`) e as queries (`Obsidian_Queries_Frigus`). Nada foi alterado no banco.
+Revisão feita em 02/11/2026 direto no Postgres (Supabase) em modo somente leitura, mais o RPA e as queries. Nada foi alterado no banco.
 
 ## 1. Placar contra os requisitos
 
