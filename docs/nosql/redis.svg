@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="740" viewBox="0 0 1200 740" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="1200" height="740" fill="#ffffff"/>
+  <text x="600" y="40" text-anchor="middle" font-size="26" font-weight="700" fill="#d82c20">Redis — modelo conceitual (chave → valor)</text>
+  <text x="600" y="66" text-anchor="middle" font-size="14" fill="#555">Sem coleções nem relações: cada chave tem um tipo de dado e, quase sempre, um TTL</text>
+
+  <!-- cabeçalho tabela -->
+  <rect x="30" y="90" width="1140" height="40" fill="#d82c20"/>
+  <g font-size="15" font-weight="700" fill="#fff">
+    <text x="46" y="116">Chave (padrão)</text>
+    <text x="440" y="116">Tipo</text>
+    <text x="540" y="116">Valor</text>
+    <text x="900" y="116">TTL</text>
+    <text x="1010" y="116">Uso</text>
+  </g>
+
+  <g font-size="14" fill="#222">
+    <rect x="30" y="130" width="1140" height="64" fill="#fdf1f0"/>
+    <text x="46" y="166" font-family="Consolas, monospace" fill="#d82c20" font-weight="700">chat:{user_id}:message</text>
+    <text x="440" y="166">String</text>
+    <text x="540" y="166">contador de mensagens</text>
+    <text x="900" y="166">60 s</text>
+    <text x="1010" y="166">rate limit</text>
+
+    <rect x="30" y="194" width="1140" height="64" fill="#ffffff"/>
+    <text x="46" y="230" font-family="Consolas, monospace" fill="#d82c20" font-weight="700">a2a:context:{context_id}</text>
+    <text x="440" y="230">String</text>
+    <text x="540" y="230">estado da sessão A2A</text>
+    <text x="900" y="230">24 h</text>
+    <text x="1010" y="230">sessão</text>
+
+    <rect x="30" y="258" width="1140" height="64" fill="#fdf1f0"/>
+    <text x="46" y="294" font-family="Consolas, monospace" fill="#d82c20" font-weight="700">guardrail:classificacao:{digest}</text>
+    <text x="440" y="294">String</text>
+    <text x="540" y="294">classificação do guardrail (JSON)</text>
+    <text x="900" y="294">24 h</text>
+    <text x="1010" y="294">cache</text>
+
+    <rect x="30" y="322" width="1140" height="64" fill="#ffffff"/>
+    <text x="46" y="358" font-family="Consolas, monospace" fill="#d82c20" font-weight="700">auth:user:{user_id}:api-key-hash</text>
+    <text x="440" y="358">String</text>
+    <text x="540" y="358">hash da API key do usuário</text>
+    <text x="900" y="358">30 d</text>
+    <text x="1010" y="358">auth</text>
+
+    <rect x="30" y="386" width="1140" height="64" fill="#fdf1f0"/>
+    <text x="46" y="422" font-family="Consolas, monospace" fill="#d82c20" font-weight="700">auth:api-key:{hash}</text>
+    <text x="440" y="422">String</text>
+    <text x="540" y="422">user_id (busca reversa)</text>
+    <text x="900" y="422">30 d</text>
+    <text x="1010" y="422">auth</text>
+
+    <rect x="30" y="450" width="1140" height="64" fill="#ffffff"/>
+    <text x="46" y="486" font-family="Consolas, monospace" fill="#d82c20" font-weight="700">ranking:desperdicio:{stock_id}</text>
+    <text x="440" y="486" font-weight="700">Sorted Set</text>
+    <text x="540" y="486">membro = product_name, score = quantidade</text>
+    <text x="900" y="486">—</text>
+    <text x="1010" y="486">ranking</text>
+  </g>
+  <rect x="30" y="130" width="1140" height="384" fill="none" stroke="#d82c20" stroke-width="2"/>
+
+  <!-- exemplo sorted set -->
+  <rect x="30" y="540" width="560" height="170" rx="8" fill="#fdf1f0" stroke="#d82c20" stroke-width="1.5"/>
+  <text x="46" y="566" font-size="15" font-weight="700" fill="#d82c20">Exemplo: ranking:desperdicio:7 (Sorted Set)</text>
+  <g font-family="Consolas, monospace" font-size="14" fill="#222">
+    <text x="46" y="596">ZINCRBY  ranking:desperdicio:7  2.5  "leite"</text>
+    <text x="46" y="620">ZREVRANGE ranking:desperdicio:7 0 2 WITHSCORES</text>
+    <text x="46" y="650">1) "leite"    score 2.5</text>
+    <text x="46" y="672">2) "alface"   score 1.0</text>
+    <text x="46" y="694">3) "iogurte"  score 0.5</text>
+  </g>
+
+  <!-- legenda -->
+  <rect x="620" y="540" width="550" height="170" rx="8" fill="#fafafa" stroke="#ddd"/>
+  <text x="636" y="566" font-size="15" font-weight="700" fill="#333">Como ler</text>
+  <g font-size="13" fill="#333">
+    <text x="636" y="594">• Chave = namespace separado por ":" (prefixo indica o domínio)</text>
+    <text x="636" y="618">• Tipo = estrutura Redis (String ou Sorted Set)</text>
+    <text x="636" y="642">• TTL expira a chave sozinha — nada fica órfão</text>
+    <text x="636" y="666">• Só o hash da API key vai pro Redis, nunca a key em claro</text>
+    <text x="636" y="690">• Relações com outros dados via user_id / stock_id no nome da chave</text>
+  </g>
+</svg>
