@@ -1,6 +1,6 @@
 # Modelos conceituais dos bancos NoSQL
 
-Além do Postgres (ver [../modelagem-de-dados.md](../modelagem-de-dados.md)), o Frigus AI usa três bancos
+Além do Postgres (ver [../modelagem-de-dados.md](../modelagem-de-dados.md)), o Frigus AI usa quatro bancos
 NoSQL, cada um com um paradigma diferente. Os diagramas abaixo foram feitos a partir do código do backend
 (`frigus-ai`): repositórios em `repositories/`, chaves em `infra/redis/keys.py` e models em `infra/neo4j/models/`.
 
@@ -8,6 +8,7 @@ NoSQL, cada um com um paradigma diferente. Os diagramas abaixo foram feitos a pa
 |---|---|---|---|
 | MongoDB | Documentos | Histórico de chat, fatos/memória do usuário, receitas favoritas | [mongo.png](mongo.png) |
 | Redis | Chave-valor | Rate limit, sessão A2A, cache do guardrail, API keys, ranking de desperdício | [redis.png](redis.png) |
+| Qdrant | Vetorial | Busca semântica: FAQ (RAG) e resumos de conversa (memória de longo prazo) | [seção abaixo](#qdrant-vetorial) |
 | Neo4j | Grafo | Projeção das receitas e ingredientes para sugerir receitas compatíveis com o estoque | [neo4j.png](neo4j.png) |
 
 Os arquivos `.svg` ao lado de cada PNG são a fonte editável.
@@ -42,7 +43,7 @@ Por que embutir `messages`: o histórico é sempre lido junto com a sessão e s�
 | `_id` | ObjectId | |
 | `user_id` | str | |
 | `alergias`, `preferencias`, `restricoes`, `habitos` | array de str | fatos extraídos da conversa |
-| `recipe_preferences` | subdocumento | atualizado por campo (`recipe_preferences.<campo>`) |
+| `recipe_preferences` | subdocumento | `restricoes: [str]`, `preferir_rapidas: bool`, `preferir_economicas: bool`; atualizado por campo (`recipe_preferences.<campo>`) |
 | `updated_at` | datetime | |
 
 ### `recipe_favorites` — um documento por receita favoritada
@@ -53,8 +54,12 @@ Por que embutir `messages`: o histórico é sempre lido junto com a sessão e s�
 | `name`, `image_url` | str, str ou null | retrato do card, evita nova chamada à Spoonacular |
 | `created_at` | datetime | |
 
+`recipe_preferences` fica separado de `alergias`/`restricoes` de propósito: a extração automática do chat
+sobrescreve esses fatos e não pode apagar o que o usuário configurou à mão na tela de receitas.
+
 O LangGraph também grava as coleções `graph_checkpoints` e `graph_checkpoint_writes` (via `MongoDBSaver`,
-com `thread_id = session_id`).
+com `thread_id = session_id`): estado do grafo por sessão, formato interno da biblioteca, não modelado aqui.
+Em ambiente local, se o Mongo estiver fora, cai para `MemorySaver` (checkpoints somem no restart).
 
 ---
 
@@ -66,7 +71,7 @@ Não há coleções nem relações: o modelo é o padrão de chave. O prefixo in
 
 | Chave | Tipo | Valor | TTL | Uso |
 |---|---|---|---|---|
-| `chat:{user_id}:message` | String | contador de mensagens | 60 s | rate limit |
+| `chat:{user_id}:message` | String | contador (`INCR`; no 1º incremento aplica `EXPIRE`) | 60 s | rate limit: até 10 mensagens por janela |
 | `a2a:context:{context_id}` | String | estado da sessão A2A | 24 h | sessão |
 | `guardrail:classificacao:{digest}` | String | classificação do guardrail | 24 h | cache |
 | `auth:user:{user_id}:api-key-hash` | String | hash da API key | 30 d | auth |
@@ -75,8 +80,8 @@ Não há coleções nem relações: o modelo é o padrão de chave. O prefixo in
 
 - Só o hash da API key é guardado (HMAC-SHA256 quando há segredo configurado), nunca a key em claro.
 - Ranking: `ZINCRBY` ao registrar desperdício, `ZREVRANGE ... WITHSCORES` para listar os maiores.
-- Os tipos das chaves String foram inferidos do uso (`get`/`set`); só o Sorted Set é confirmado por comando
-  específico.
+- Rate limit conferido no código (`INCR` + `EXPIRE`, 10 mensagens por 60 s). Os demais tipos String foram
+  inferidos do uso (`get`/`set`); o Sorted Set é confirmado por `ZINCRBY`/`ZREVRANGE`.
 
 ---
 
@@ -105,3 +110,19 @@ WHERE r.ingredients_complete = true
 RETURN r.external_id, r.name, score
 ```
 Se o Neo4j estiver fora do ar, o backend cai no cruzamento SQL (`fn_suggest_recipes`).
+
+---
+
+## Qdrant (vetorial)
+
+Sem diagrama próprio. Cada ponto tem id, vetor (distância cosseno, dimensão lida do modelo de embedding Gemini)
+e payload. Há duas coleções, com nomes definidos em `settings`:
+
+| Coleção | Payload | Id do ponto | Origem |
+|---|---|---|---|
+| FAQ (RAG) | `text`, `file`, `page` | `uuid5` do texto do chunk | ingestão dos PDFs (`graph/tools/faq/ingest.py`) |
+| Resumos de chat | `user_id`, `session_id`, `resumo` | derivado de `session_id` | `ChatEmbeddingsRepository.salvar_resumo` |
+
+- Resumos de chat têm índice de payload (keyword) em `user_id` e `session_id`; a busca filtra por `user_id`.
+- PII é redigida antes de gerar o embedding: o texto completo fica só no Mongo (`agent_chats.resume`).
+- O Mongo é a fonte: `indexado_ate` < `resumido_ate` indica embedding pendente, refeito pelo reconciliador.
