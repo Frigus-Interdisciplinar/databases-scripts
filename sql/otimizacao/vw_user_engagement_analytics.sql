@@ -1,3 +1,7 @@
+-- SUBSTITUÍDO. Este arquivo foi o rascunho das correções de 02/11/2026 e ficou na main por engano.
+-- A versão oficial está nas migrations de supabase/migrations/ (20261102120300). Não aplique este arquivo.
+-- Mantido apenas como histórico.
+
 -- Otimizacao: agrega cada tabela antes do join (antes: ~1.7 s, ~320 mil linhas no join; depois: ~56 ms)
 CREATE OR REPLACE VIEW public.vw_user_engagement_analytics AS
 WITH msg AS (
