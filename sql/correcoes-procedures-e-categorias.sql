@@ -1,3 +1,7 @@
+-- SUBSTITUÍDO. Este arquivo foi o rascunho das correções de 02/11/2026 e ficou na main por engano.
+-- A versão oficial está nas migrations de supabase/migrations/ (20261102120000 a 20261102120200). Não aplique este arquivo.
+-- Mantido apenas como histórico.
+
 -- fn_pair_key por uuid (ids reais); a versao int fica, sem uso
 CREATE OR REPLACE FUNCTION public.fn_pair_key(p_user_a uuid, p_user_b uuid)
 RETURNS varchar LANGUAGE sql IMMUTABLE AS $$

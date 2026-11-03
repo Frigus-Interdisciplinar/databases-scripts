@@ -90,6 +90,7 @@ erDiagram
 - Status do item de estoque é calculado por trigger a partir da validade; `initial_quantity` é preenchida na entrada.
 - `updated_at` é atualizado por trigger em todas as tabelas.
 - Notificações: trigger avisa estoque baixo/zerado em conta comercial e item novo na lista de compras, respeitando as preferências do usuário.
+- `stock_products.category` é sempre igual a `products.category`: um trigger copia a categoria ao inserir ou alterar um item de estoque, e outro propaga a mudança de `products.category` para os itens.
 
 ## 4. Objetos programados
 
@@ -99,7 +100,7 @@ erDiagram
 | `fn_compute_product_status_enum(data, dias)` | Devolve FRESH, NEAR_EXPIRATION ou EXPIRED conforme a validade |
 | `fn_low_stock_products(estoque)` | Lista itens abaixo do mínimo de um estoque |
 | `fn_suggest_recipes(estoque)` | Para cada receita, quantos ingredientes tem, quantos faltam e uma nota de 0 a 1 |
-| `fn_pair_key(uuid, uuid)` | Chave estável de um par de usuários (ordem não importa) |
+| `fn_pair_key(uuid, uuid)` | Chave estável de um par de usuários, no formato `uuid-uuid` (a ordem não importa) |
 | `dw.sp_load_all()` | Recarrega o DW inteiro (ver seção 5) |
 
 **Procedures** (todas usam `uuid` para usuário, lista e conversa)
@@ -135,16 +136,18 @@ WHERE object_schema = 'public' AND object_name = 'stock_products'
 ORDER BY ordinal_position;
 ```
 
-**Segurança.** RLS ligado nas tabelas principais de `public`; o backend conecta com papel de alto privilégio. Tabelas novas devem nascer com RLS e sem grants para `anon`/`authenticated`, como foi feito em `product_categories`.
+**Níveis de acesso.** Cada linha do catálogo tem um nível (`PUBLICO`, `INTERNO`, `RESTRITO` ou `CONFIDENCIAL`, definidos em `governance.access_levels`) e uma classificação (`NEGOCIO`, `PESSOAL`, `FINANCEIRO`, `CREDENCIAL`, `AUDITORIA` ou `TECNICO`). Ver `entregas/04-governanca/niveis-de-acesso.md`.
+
+**Segurança.** Esta entrega decidiu não criar policies de RLS, então os grants padrão do Supabase continuam valendo. O acesso deve ser só pela Core API, e os níveis de acesso são a política pretendida. Tabelas novas devem nascer com RLS e sem grants para `anon`/`authenticated`, como `product_categories`.
 
 ## 7. RPA (do banco legado para o novo)
 
-Python que copia o `dbFrigus` (somente leitura) para o Supabase, a cada hora ou sob demanda (`python main.py --once`, `--dry-run`).
+Python (repositório `frigus-rpa`) que copia o `dbFrigus` (somente leitura) para o Supabase, a cada hora ou sob demanda (`python main.py --once`, `--dry-run`). Os logs usam `loguru`.
 - Cada ciclo é uma transação: se der erro, nada fica pela metade.
 - Cada passo é idempotente (rodar de novo não duplica). Só insere; não atualiza nem apaga.
 - Se a conexão cair, tenta 3 vezes com espera crescente. Valor desconhecido na origem (categoria, plano) para o ciclo com erro claro.
-- Depois do commit, chama `dw.sp_load_all()` em transação separada; se o DW falhar, a migração continua gravada e o erro vai para o log. Mudança na branch `feat/recarga-dw-apos-ciclo` do repo `frigus-rpa`, ainda sem PR.
-- Mapeamento tabela a tabela: `rpa/docs/tabelas.md`.
+- Depois do commit, chama `dw.sp_load_all()` em transação separada; se o DW falhar, a migração continua gravada e o erro vai para o log. Já está na `main` do `frigus-rpa`.
+- Mapeamento tabela a tabela: `docs/tabelas.md` no repositório `frigus-rpa`.
 
 ## 8. Desempenho
 
@@ -154,20 +157,22 @@ EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM dw.vw_dau;
 ```
 Em 02/11, `dw.vw_dau` rodou em ~2 ms com `Index Only Scan` em `ix_user_daily_access_date_user`, e a consulta da fato por data usou `ix_fact_mov_date`.
 
-**Análise registrada (02/11).** `public.vw_user_engagement_analytics` levava ~1,7 s para 3.006 usuários. O plano mostrou ~320 mil linhas no join de mensagens, movimentações e pedidos (produto cartesiano por usuário) antes de agregar. Um índice não resolveria isso. A view foi reescrita para agregar cada tabela antes do join, com as mesmas colunas e os mesmos valores (a única diferença é a ordem entre empates de `activity_recency_rank`, que já era arbitrária). Resultado: ~56 a 62 ms. SQL em `sql/otimizacao/vw_user_engagement_analytics.sql`.
+**Análise registrada (02/11).** `public.vw_user_engagement_analytics` levava ~1,7 s para 3.006 usuários. O plano mostrou ~320 mil linhas no join de mensagens, movimentações e pedidos (produto cartesiano por usuário) antes de agregar. Um índice não resolveria isso. A view foi reescrita para agregar cada tabela antes do join, com as mesmas colunas e os mesmos valores (a única diferença é a ordem entre empates de `activity_recency_rank`, que já era arbitrária). Resultado: ~56 a 62 ms. Migration `supabase/migrations/20261102120300_otimiza_vw_engajamento.sql`; medição em `entregas/03-objetos-e-otimizacao/explain-analyze-dev.md`.
 
-## 9. Backup e recuperação (rascunho a validar)
+## 9. Backup e recuperação
 
-Confirmar no painel do Supabase o plano do projeto (retenção dos backups diários e PITR).
-- **Backup:** diário automático do Supabase; `pg_dump --format=custom` semanal e antes de migrações, guardado fora do projeto com retenção de 4 semanas.
-- **Falha de dado:** reconstruir a linha a partir de `audit.row_change_log.old_row` (para `products` e `stock_products`), ou restaurar para um ponto no tempo em projeto novo e copiar as linhas.
-- **Perda total:** criar projeto novo, `pg_restore --no-owner`, rodar `SELECT dw.sp_load_all();`, conferir contagens (`users`, `stock_products`, `stock_movements`) e testar login e uma consulta de BI.
-- **Teste de restauração:** fazer ao menos uma vez e anotar data, duração e resultado. Sugestão: RPO 24 h, RTO 4 h.
+O procedimento oficial está em `entregas/04-governanca/backup-recuperacao.md`. Dois pontos específicos do banco:
+
+- **Falha de dado:** dá para reconstruir uma linha a partir de `audit.row_change_log.old_row` (só para `products` e `stock_products`), ou restaurar para um ponto no tempo em projeto novo e copiar as linhas.
+- **Depois de restaurar:** rodar `SELECT dw.sp_load_all();`, conferir as contagens (`users`, `stock_products`, `stock_movements`) e testar login e uma consulta de BI.
+
+Faltam definir RPO, RTO e responsáveis, e registrar um teste de restauração.
 
 ## 10. Pontos de atenção conhecidos
 
 - O DW é refeito por inteiro a cada ciclo; com muito mais dados, vale torná-lo incremental.
-- O DAU depende do backend inserir o acesso; não há trigger no banco para isso.
-- Catálogo de dados com descrições genéricas e duas tabelas fora (`support_requests`, `user_app_settings`).
-- 30 tabelas ainda sem RLS (entre elas `password_reset_tokens`, `notifications`, `dw.*`).
-- `databases-scripts/sql/schema/schema.sql` está defasado em relação ao banco real (ids inteiros, enums em português).
+- O DAU depende da Core API inserir o acesso; não há trigger no banco para isso.
+- `stock_products.category` continua como cópia mantida por trigger. Removê-la exige mudar a Core API, o `frigus-ai`, o RPA e a procedure `sp_purchase_shopping_list_item`.
+- As descrições de colunas geradas na migration `20261102120600` são inferidas e precisam de revisão com o backend.
+- Sem policies de RLS (decisão da entrega): 30 tabelas dependem só dos grants e do acesso exclusivo pela Core API.
+- As migrations `20261102120*` e `121*` estão aplicadas só no Dev. Ver as pendências em `docs/modelagem-de-dados.md`.
